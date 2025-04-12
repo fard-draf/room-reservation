@@ -39,6 +39,5 @@ impl<T: DBRepository<Room>> RoomService<T> {
         } else {
             Ok(false)
         }
-        
     }
 }

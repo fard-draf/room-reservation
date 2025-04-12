@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate};
 use uuid::Uuid;
 
 ////////////////////////////USERS/////////////////////////
@@ -15,7 +15,7 @@ impl User {
     pub fn new(name: &str) -> Result<Self, Box<dyn Error>> {
         Ok(Self {
             id: UserID::new(),
-            name: UserName::new(name.to_string())?,
+            name: UserName::new(name)?,
         })
     }
 }
@@ -35,11 +35,16 @@ pub struct UserName {
     pub name: String,
 }
 impl UserName {
-    pub fn new(name: String) -> Result<Self, Box<dyn Error>> {
-        if name.len() <= 2 {
-            return Err("Invalid name".into());
+    pub fn new(name: &str) -> Result<Self, Box<dyn Error>> {
+        let cleaned_name = name.trim();
+        if cleaned_name.len() <= 2 {
+            return Err("Invalid name: too short".into());
+        } else if cleaned_name.len() >= 35 {
+            return Err("Invalid name: too long".into());
         } else {
-            Ok(Self { name })
+            Ok(Self {
+                name: cleaned_name.to_string(),
+            })
         }
     }
 }
@@ -66,9 +71,12 @@ pub struct RoomName {
 }
 
 impl RoomName {
-    pub fn new(name: String) -> Result<Self, Box<dyn Error>> {
+    pub fn new(mut name: String) -> Result<Self, Box<dyn Error>> {
+        name = name.trim().to_string();
         if name.len() <= 2 {
-            return Err("Invalid name".into());
+            return Err("Invalid name: too short".into());
+        } else if name.len() >= 17 {
+            return Err("Invalid name: too long".into());
         } else {
             Ok(Self { name })
         }
@@ -101,7 +109,19 @@ pub struct BookDate {
 
 impl BookDate {
     pub fn new(input_date: &str) -> Result<Self, Box<dyn Error>> {
-        let reservation_date = NaiveDate::parse_from_str(input_date, "%d.%m.%y")?;
+        let actual_date = Local::now().date_naive();
+
+        let cleaned: String = input_date.trim().replace("/", ".");
+
+        if cleaned.len() != 8 {
+            return Err("Invalid: format had to be dd.mm.yy".into());
+        }
+        let reservation_date: NaiveDate = NaiveDate::parse_from_str(&cleaned, "%d.%m.%y")?;
+
+        if reservation_date < actual_date {
+            return Err("Impossible to book a past date".into());
+        }
+
         Ok(Self {
             date: reservation_date,
         })

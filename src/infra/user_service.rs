@@ -1,9 +1,6 @@
 use std::error::Error;
 
-use crate::{
-    domain::User,
-    repository::DBRepository,
-};
+use crate::{domain::User, repository::DBRepository};
 
 use super::in_memo_repo::InMemoryRepo;
 
@@ -24,15 +21,13 @@ impl<T: DBRepository<User>> UserService<T> {
         Ok(user)
     }
 
-    pub fn remove_user(&mut self, user: &str) -> Result<(), Box<dyn Error>> {       
+    pub fn remove_user(&mut self, user: &str) -> Result<(), Box<dyn Error>> {
         let user_list = self.repo.list()?;
         if let Some(data) = user_list.iter().find(|x| x.name.name == user) {
-            return Ok(self.repo.remove_data(data)?);  
+            return Ok(self.repo.remove_data(data)?);
         } else {
             Err("User doesn't exist".into())
         }
-        
-        
     }
     pub fn list_users(&self) -> Result<Vec<User>, Box<dyn Error>> {
         self.repo.list()
@@ -43,9 +38,6 @@ impl<T: DBRepository<User>> UserService<T> {
             Ok(true)
         } else {
             Ok(false)
-        }  
+        }
     }
 }
-
-
-
