@@ -15,8 +15,7 @@ impl<T> RegService<T> {
     }
 }
 
-impl < T: DBRepository<Book>> RegService<T> {
-
+impl<T: DBRepository<Book>> RegService<T> {
     pub fn book_room(
         &mut self,
         room: &Room,
@@ -24,10 +23,16 @@ impl < T: DBRepository<Book>> RegService<T> {
         desired_date: &str,
     ) -> Result<(), Box<dyn Error>> {
         let date = BookDate::new(desired_date)?;
-        let book= Book {room: room.clone(), user: user.clone(), date};
-        
-        let all_book= self.repo.list()?;
-        let is_already_booked = all_book.iter().any(|x| (x.date.date == book.date.date) && (x.room.name.name == room.name.name));
+        let book = Book {
+            room: room.clone(),
+            user: user.clone(),
+            date,
+        };
+
+        let all_book = self.repo.list()?;
+        let is_already_booked = all_book
+            .iter()
+            .any(|x| (x.date.date == book.date.date) && (x.room.name.name == room.name.name));
 
         if is_already_booked {
             println!("Already booked");
@@ -36,7 +41,7 @@ impl < T: DBRepository<Book>> RegService<T> {
 
         self.repo.insert_data(&book)?;
         println!("{:?} reserved on {:?}", room.name, desired_date);
-       
+
         Ok(())
     }
 

@@ -6,4 +6,3 @@ pub trait DBRepository<T> {
     fn list(&self) -> Result<Vec<T>, Box<dyn Error>>;
     fn is_empty(&self, data: &T) -> Result<bool, Box<dyn Error>>;
 }
-

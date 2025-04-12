@@ -35,11 +35,10 @@ impl<T: PartialEq + Debug + Clone> DBRepository<T> for InMemoryRepo<T> {
         Ok(vec)
     }
     fn is_empty(&self, data: &T) -> Result<bool, Box<dyn std::error::Error>> {
-        if let Some(_pos) = self.repo.iter().position(|x| x == data) {
+        if self.repo.iter().any(|x| x == data) {
             Ok(true)
         } else {
             Ok(false)
         }
     }
 }
-
