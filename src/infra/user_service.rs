@@ -2,8 +2,6 @@ use std::error::Error;
 
 use crate::{domain::User, repository::DBRepository};
 
-use super::in_memo_repo::InMemoryRepo;
-
 pub struct UserService<T> {
     repo: T,
 }
@@ -26,12 +24,14 @@ impl<T: DBRepository<User>> UserService<T> {
         if let Some(data) = user_list.iter().find(|x| x.name.name == user) {
             return Ok(self.repo.remove_data(data)?);
         } else {
-            Err("User doesn't exist".into())
+            Err("This user doesn't exist".into())
         }
     }
+
     pub fn list_users(&self) -> Result<Vec<User>, Box<dyn Error>> {
         self.repo.list()
     }
+
     pub fn is_exist_user(&self, user: &str) -> Result<bool, Box<dyn Error>> {
         let user_list = self.repo.list()?;
         if user_list.iter().any(|x| x.name.name == user) {
