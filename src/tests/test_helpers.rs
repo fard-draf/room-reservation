@@ -1,10 +1,12 @@
 use crate::{
-    domain::{Room, User, Book}, error::{ErrDB, ErrDomain}, infra::{
+    domain::{Book, Room, User},
+    error::{ErrDB, ErrDomain},
+    infra::{
         in_memo_repo::{self, InMemoryRepo},
         reg_service::{self, RegService},
         room_service::{self, RoomService},
-        user_service::{self, UserService}
-    }
+        user_service::{self, UserService},
+    },
 };
 
 pub fn default_users() -> Result<(User, User), ErrDomain> {

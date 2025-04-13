@@ -6,11 +6,8 @@ mod test {
         tests::test_helpers::{default_users, init_user_service},
     };
 
-
-
     #[test]
     fn add_and_list_user() -> Result<(), ErrService> {
-
         let user_service = init_user_service()?;
         let (user1, user2) = default_users()?;
 

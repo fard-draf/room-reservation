@@ -6,14 +6,11 @@ mod test {
         tests::test_helpers::{default_rooms, default_users, init_reg_service},
     };
 
-
     #[test]
     fn add_and_list_book() -> Result<(), ErrService> {
-        
         let mut reg_service = init_reg_service()?;
         let (room1, _room2) = default_rooms()?;
-        let (user1, _user2 ) = default_users()?;
-
+        let (user1, _user2) = default_users()?;
 
         let add_book_ok = reg_service.book_room(&room1, &user1, "01.02.52");
         assert!(add_book_ok.is_ok(), "Add book should be ok");
@@ -38,7 +35,7 @@ mod test {
     fn print_book() -> Result<(), ErrService> {
         let mut reg_service = init_reg_service()?;
         let (room1, _room2) = default_rooms()?;
-        let (user1, _user2 ) = default_users()?;
+        let (user1, _user2) = default_users()?;
 
         reg_service.book_room(&room1, &user1, "20.12.26")?;
 

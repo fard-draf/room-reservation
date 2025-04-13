@@ -1,4 +1,3 @@
-
 use crate::error::ErrDB;
 
 pub trait DBRepository<T> {

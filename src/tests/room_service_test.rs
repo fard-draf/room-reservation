@@ -1,12 +1,7 @@
 #[cfg(test)]
 
 mod test {
-    use crate::{
-        
-        error::ErrService,
-        tests::test_helpers::init_room_service,
-    };
-
+    use crate::{error::ErrService, tests::test_helpers::init_room_service};
 
     #[test]
     fn add_and_list_room() -> Result<(), ErrService> {
@@ -27,7 +22,6 @@ mod test {
     #[test]
     fn create_an_invalid_room() -> Result<(), ErrService> {
         let mut room_service = init_room_service()?;
-
 
         let create_valid_room_trimed_ok =
             room_service.add_room("\t \t \t \t \t \t \t La Manche \t \t \t \t \t \t \t ");
@@ -56,7 +50,6 @@ mod test {
     fn remove_an_existing_and_unexisting_room() -> Result<(), ErrService> {
         let mut room_service = init_room_service()?;
 
-
         room_service.add_room("La Chambre Jaune")?;
 
         let exist_true = room_service.is_exist_room("La Chambre Jaune")?;
@@ -83,7 +76,6 @@ mod test {
     #[test]
     fn find_existing_and_unexisting_room() -> Result<(), ErrService> {
         let mut room_service = init_room_service()?;
-
 
         room_service.add_room("Palaccio")?;
 
