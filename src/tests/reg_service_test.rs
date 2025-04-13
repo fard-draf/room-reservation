@@ -3,26 +3,17 @@ mod test {
     use crate::{
         domain::*,
         error::{ErrBook, ErrService},
-        infra::{in_memo_repo::InMemoryRepo, reg_service::RegService},
+        tests::test_helpers::{default_rooms, default_users, init_reg_service},
     };
 
-    fn setup_environment()
-    -> Result<(Room, Room, User, User, RegService<InMemoryRepo<Book>>), ErrService> {
-        let room1 = Room::new("Suite Royale")?;
-        let room2 = Room::new("Suite Nuptiale")?;
-
-        let user1 = User::new("Boris")?;
-        let user2 = User::new("Aline")?;
-
-        let repo = InMemoryRepo::new();
-        let reg_service = RegService::new(repo);
-
-        Ok((room1, room2, user1, user2, reg_service))
-    }
 
     #[test]
     fn add_and_list_book() -> Result<(), ErrService> {
-        let (room1, _room2, user1, _user2, mut reg_service) = setup_environment()?;
+        
+        let mut reg_service = init_reg_service()?;
+        let (room1, _room2) = default_rooms()?;
+        let (user1, _user2 ) = default_users()?;
+
 
         let add_book_ok = reg_service.book_room(&room1, &user1, "01.02.52");
         assert!(add_book_ok.is_ok(), "Add book should be ok");
@@ -45,7 +36,10 @@ mod test {
 
     #[test]
     fn print_book() -> Result<(), ErrService> {
-        let (room1, _room2, user1, _user2, mut reg_service) = setup_environment()?;
+        let mut reg_service = init_reg_service()?;
+        let (room1, _room2) = default_rooms()?;
+        let (user1, _user2 ) = default_users()?;
+
         reg_service.book_room(&room1, &user1, "20.12.26")?;
 
         assert!(reg_service.print_book().is_ok());

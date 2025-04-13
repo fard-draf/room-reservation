@@ -1,13 +1,11 @@
 #[cfg(test)]
 
 mod test {
-    use crate::{domain::*, error::ErrService, infra::in_memo_repo::InMemoryRepo, repository::*};
+    use crate::{domain::*, error::ErrService, infra::in_memo_repo::InMemoryRepo, repository::*, tests::test_helpers::{default_users, init_inmemory_repo, init_user_service}};
 
-    fn initialize_repo() -> Result<(InMemoryRepo<User>, User, User), ErrService> {
-        let repo: InMemoryRepo<User> = InMemoryRepo::<User>::new();
-        let user1: User = User::new("Walid")?;
-        let user2 = User::new("Camille")?;
-
+    fn initialize_repo<T>() -> Result<(InMemoryRepo<T>, User, User), ErrService> {
+        let repo = init_inmemory_repo()?;
+        let (user1, user2) = default_users()?;
         Ok((repo, user1, user2))
     }
 

@@ -3,29 +3,22 @@ mod test {
     use crate::{
         domain::*,
         error::{ErrDB, ErrService},
-        infra::{in_memo_repo::InMemoryRepo, user_service::*},
+        tests::test_helpers::{default_users, init_user_service},
     };
-    use std::error::Error;
 
-    fn inialize_repo() -> Result<UserService<InMemoryRepo<User>>, ErrDB> {
-        let repo_user: InMemoryRepo<User> = InMemoryRepo::new();
-        Ok(UserService::new(repo_user))
-    }
+
 
     #[test]
     fn add_and_list_user() -> Result<(), ErrService> {
-        let mut user_service = inialize_repo()?;
 
-        let francois = user_service.add_user("Francois Fouesn")?;
-        let jeanne = user_service.add_user("Jeanne Delcros")?;
-        let david = user_service.add_user("David Durand")?;
+        let user_service = init_user_service()?;
+        let (user1, user2) = default_users()?;
 
         let users = user_service.list_users()?;
 
-        assert_eq!(users.len(), 3);
-        assert_eq!(users[0], francois);
-        assert_eq!(users[1], jeanne);
-        assert_eq!(users[2], david);
+        assert_eq!(users.len(), 2);
+        assert_eq!(users[0], user1);
+        assert_eq!(users[1], user2);
 
         Ok(())
     }
@@ -43,7 +36,7 @@ mod test {
 
     #[test]
     fn remove_an_existing_and_unexisting_user() -> Result<(), ErrService> {
-        let mut user_service = inialize_repo()?;
+        let mut user_service = init_user_service()?;
 
         user_service.add_user("Boris")?;
 
