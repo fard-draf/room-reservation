@@ -15,7 +15,7 @@ impl<T> UserService<T> {
 }
 
 impl<T: DBRepository<User>> UserService<T> {
-    pub fn add_user(&mut self, user: &str) -> Result<User, ErrService> {
+    pub fn add_new_user(&mut self, user: &str) -> Result<User, ErrService> {
         let user = User::new(user)?;
         self.repo.insert_data(&user)?;
         Ok(user)

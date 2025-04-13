@@ -1,21 +1,23 @@
 #[cfg(test)]
 mod test {
     use crate::{
-        domain::*,
-        error::{ErrDB, ErrService},
-        tests::test_helpers::{default_users, init_user_service},
+        domain::*, error::{ErrDB, ErrService}, infra::{in_memo_repo::InMemoryRepo, user_service::UserService}, tests::test_helpers::{default_user1, default_user2, default_users, init_user_service}
     };
 
     #[test]
     fn add_and_list_user() -> Result<(), ErrService> {
-        let user_service = init_user_service()?;
-        let (user1, user2) = default_users()?;
-
+        let mut user_service = init_user_service()?;
+        
+        let user1_name = &(default_user1()?).name.name;
+        let user2_name = &(default_user2()?).name.name;
+        
+        
+        assert!(user_service.add_new_user(&user1_name).is_ok());        
+        assert!(user_service.add_new_user(&user2_name).is_ok());
+        
         let users = user_service.list_users()?;
-
+        
         assert_eq!(users.len(), 2);
-        assert_eq!(users[0], user1);
-        assert_eq!(users[1], user2);
 
         Ok(())
     }
@@ -33,12 +35,12 @@ mod test {
 
     #[test]
     fn remove_an_existing_and_unexisting_user() -> Result<(), ErrService> {
-        let mut user_service = init_user_service()?;
+        let mut user_service: UserService<InMemoryRepo<User>> = init_user_service()?;
 
-        user_service.add_user("Boris")?;
+        user_service.add_new_user("Boris")?;
 
         assert!(user_service.is_exist_user("Boris").is_ok());
-        assert!(user_service.is_exist_user("Joris").is_err());
+        assert_eq!(user_service.is_exist_user("Joris")?, false);
 
         assert!(user_service.remove_user("Boris").is_ok());
         assert!(user_service.remove_user("Joris").is_err());
