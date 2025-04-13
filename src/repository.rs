@@ -1,8 +1,9 @@
-use std::error::Error;
+
+use crate::error::ErrDB;
 
 pub trait DBRepository<T> {
-    fn insert_data(&mut self, data: &T) -> Result<(), Box<dyn Error>>;
-    fn remove_data(&mut self, data: &T) -> Result<(), Box<dyn Error>>;
-    fn list(&self) -> Result<Vec<T>, Box<dyn Error>>;
-    fn is_empty(&self, data: &T) -> Result<bool, Box<dyn Error>>;
+    fn insert_data(&mut self, data: &T) -> Result<(), ErrDB>;
+    fn remove_data(&mut self, data: &T) -> Result<(), ErrDB>;
+    fn list(&self) -> Result<Vec<T>, ErrDB>;
+    fn is_empty(&self, data: &T) -> Result<bool, ErrDB>;
 }

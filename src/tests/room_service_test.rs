@@ -3,20 +3,18 @@
 mod test {
     use crate::{
         domain::*,
-        infra::{
-            in_memo_repo::InMemoryRepo,
-            room_service::RoomService,
-            },
+        error::{ErrDB, ErrService},
+        infra::{in_memo_repo::InMemoryRepo, room_service::RoomService},
     };
     use std::error::Error;
 
-    fn inialize_repo() -> Result<RoomService<InMemoryRepo<Room>>, Box<dyn Error>> {
+    fn inialize_repo() -> Result<RoomService<InMemoryRepo<Room>>, ErrDB> {
         let repo_room: InMemoryRepo<Room> = InMemoryRepo::new();
         Ok(RoomService::new(repo_room))
     }
 
     #[test]
-    fn add_and_list_room() -> Result<(), Box<dyn Error>> {
+    fn add_and_list_room() -> Result<(), ErrService> {
         let mut room_service = inialize_repo()?;
 
         let add_room_ok = room_service.add_room("El Palaccio");
@@ -32,7 +30,7 @@ mod test {
     }
 
     #[test]
-    fn create_an_invalid_room() -> Result<(), Box<dyn Error>> {
+    fn create_an_invalid_room() -> Result<(), ErrService> {
         let mut room_service = inialize_repo()?;
 
         let create_valid_room_trimed_ok =
@@ -59,7 +57,7 @@ mod test {
     }
 
     #[test]
-    fn remove_an_existing_and_unexisting_room() -> Result<(), Box<dyn Error>> {
+    fn remove_an_existing_and_unexisting_room() -> Result<(), ErrService> {
         let mut room_service = inialize_repo()?;
 
         room_service.add_room("La Chambre Jaune")?;
@@ -86,7 +84,7 @@ mod test {
     }
 
     #[test]
-    fn find_existing_and_unexisting_room() -> Result<(), Box<dyn Error>> {
+    fn find_existing_and_unexisting_room() -> Result<(), ErrService> {
         let mut room_service = inialize_repo()?;
 
         room_service.add_room("Palaccio")?;

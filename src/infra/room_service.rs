@@ -1,6 +1,8 @@
-use std::error::Error;
-
-use crate::{domain::Room, repository::DBRepository};
+use crate::{
+    domain::Room,
+    error::{ErrDB, ErrService},
+    repository::DBRepository,
+};
 
 pub struct RoomService<T> {
     repo: T,
@@ -13,26 +15,26 @@ impl<T> RoomService<T> {
 }
 
 impl<T: DBRepository<Room>> RoomService<T> {
-    pub fn add_room(&mut self, room: &str) -> Result<Room, Box<dyn Error>> {
+    pub fn add_room(&mut self, room: &str) -> Result<Room, ErrService> {
         let room: Room = Room::new(room)?;
         self.repo.insert_data(&room)?;
         Ok(room)
     }
 
-    pub fn remove_room(&mut self, room: &str) -> Result<(), Box<dyn Error>> {
+    pub fn remove_room(&mut self, room: &str) -> Result<(), ErrService> {
         let room_list = self.repo.list()?;
         if let Some(data) = room_list.iter().find(|x| x.name.name == room) {
             return Ok(self.repo.remove_data(data)?);
         } else {
-            Err("This room doesn't exist".into())
+            Err(ErrService::DbRequest(ErrDB::Unreachable))
         }
     }
 
-    pub fn list_rooms(&self) -> Result<Vec<Room>, Box<dyn Error>> {
+    pub fn list_rooms(&self) -> Result<Vec<Room>, ErrDB> {
         self.repo.list()
     }
 
-    pub fn is_exist_room(&self, data: &str) -> Result<bool, Box<dyn Error>> {
+    pub fn is_exist_room(&self, data: &str) -> Result<bool, ErrService> {
         let room_list = self.repo.list()?;
         if room_list.iter().any(|x| x.name.name == data) {
             Ok(true)

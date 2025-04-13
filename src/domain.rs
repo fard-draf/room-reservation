@@ -1,7 +1,7 @@
-use std::error::Error;
-
 use chrono::{Local, NaiveDate};
 use uuid::Uuid;
+
+use crate::error::*;
 
 ////////////////////////////USERS/////////////////////////
 
@@ -12,7 +12,7 @@ pub struct User {
 }
 
 impl User {
-    pub fn new(name: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn new(name: &str) -> Result<Self, ErrDomain> {
         Ok(Self {
             id: UserID::new(),
             name: UserName::new(name)?,
@@ -35,12 +35,12 @@ pub struct UserName {
     pub name: String,
 }
 impl UserName {
-    pub fn new(name: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn new(name: &str) -> Result<Self, ErrDomain> {
         let cleaned_name = name.trim();
         if cleaned_name.len() <= 2 {
-            return Err("Invalid name: too short".into());
+            return Err(ErrDomain::UserCreation(ErrUser::InvalidNameTooShort));
         } else if cleaned_name.len() >= 35 {
-            return Err("Invalid name: too long".into());
+            return Err(ErrDomain::UserCreation(ErrUser::InvalidNameTooLong));
         } else {
             Ok(Self {
                 name: cleaned_name.to_string(),
@@ -57,7 +57,7 @@ pub struct Room {
 }
 
 impl Room {
-    pub fn new(name: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn new(name: &str) -> Result<Self, ErrDomain> {
         Ok(Self {
             id: RoomID::new(),
             name: RoomName::new(name.to_string())?,
@@ -71,12 +71,12 @@ pub struct RoomName {
 }
 
 impl RoomName {
-    pub fn new(mut name: String) -> Result<Self, Box<dyn Error>> {
+    pub fn new(mut name: String) -> Result<Self, ErrDomain> {
         name = name.trim().to_string();
         if name.len() <= 2 {
-            return Err("Invalid name: too short".into());
+            return Err(ErrDomain::RoomCreation(ErrRoom::InvalidNameTooShort));
         } else if name.len() >= 17 {
-            return Err("Invalid name: too long".into());
+            return Err(ErrDomain::RoomCreation(ErrRoom::InvalidNameTooLong));
         } else {
             Ok(Self { name })
         }
@@ -108,18 +108,21 @@ pub struct BookDate {
 }
 
 impl BookDate {
-    pub fn new(input_date: &str) -> Result<Self, Box<dyn Error>> {
+    pub fn new(input_date: &str) -> Result<Self, ErrDomain> {
         let actual_date = Local::now().date_naive();
 
         let cleaned: String = input_date.trim().replace("/", ".");
 
         if cleaned.len() != 8 {
-            return Err("Invalid: format had to be dd.mm.yy".into());
+            return Err(ErrDomain::BookCreation(ErrBook::InvalidDateFormat));
         }
-        let reservation_date: NaiveDate = NaiveDate::parse_from_str(&cleaned, "%d.%m.%y")?;
+        let reservation_date: NaiveDate = match NaiveDate::parse_from_str(&cleaned, "%d.%m.%y") {
+            Ok(date) => date,
+            Err(e) => Err(ErrDomain::BookCreation(ErrBook::InvalidDateFormat))?,
+        };
 
         if reservation_date < actual_date {
-            return Err("Impossible to book a past date".into());
+            return Err(ErrDomain::BookCreation(ErrBook::InvalidDate));
         }
 
         Ok(Self {

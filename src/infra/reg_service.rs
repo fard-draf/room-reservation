@@ -1,9 +1,8 @@
 use crate::{
     domain::{Book, BookDate, Room, User},
+    error::{ErrBook, ErrDomain, ErrService},
     repository::DBRepository,
 };
-
-use std::error::Error;
 
 pub struct RegService<T> {
     repo: T,
@@ -21,8 +20,9 @@ impl<T: DBRepository<Book>> RegService<T> {
         room: &Room,
         user: &User,
         desired_date: &str,
-    ) -> Result<(), Box<dyn Error>> {
-        let date = BookDate::new(desired_date)?;
+    ) -> Result<(), ErrService> {
+        let date = BookDate::new(desired_date)
+            .map_err(|_| ErrDomain::BookCreation(ErrBook::InvalidDateFormat))?;
         let book = Book {
             room: room.clone(),
             user: user.clone(),
@@ -45,7 +45,7 @@ impl<T: DBRepository<Book>> RegService<T> {
         Ok(())
     }
 
-    pub fn print_book(&self) -> Result<Vec<Book>, Box<dyn Error>> {
+    pub fn print_book(&self) -> Result<Vec<Book>, ErrService> {
         Ok(self.repo.list()?)
     }
 }

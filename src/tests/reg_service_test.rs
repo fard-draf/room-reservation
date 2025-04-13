@@ -2,15 +2,12 @@
 mod test {
     use crate::{
         domain::*,
-        infra::{
-            in_memo_repo::InMemoryRepo,
-            reg_service::RegService,
-        },
+        error::{ErrBook, ErrService},
+        infra::{in_memo_repo::InMemoryRepo, reg_service::RegService},
     };
-    use std::error::Error;
 
     fn setup_environment()
-    -> Result<(Room, Room, User, User, RegService<InMemoryRepo<Book>>), Box<dyn Error>> {
+    -> Result<(Room, Room, User, User, RegService<InMemoryRepo<Book>>), ErrService> {
         let room1 = Room::new("Suite Royale")?;
         let room2 = Room::new("Suite Nuptiale")?;
 
@@ -24,7 +21,7 @@ mod test {
     }
 
     #[test]
-    fn add_and_list_book() -> Result<(), Box<dyn Error>> {
+    fn add_and_list_book() -> Result<(), ErrService> {
         let (room1, _room2, user1, _user2, mut reg_service) = setup_environment()?;
 
         let add_book_ok = reg_service.book_room(&room1, &user1, "01.02.52");
@@ -34,7 +31,7 @@ mod test {
     }
 
     #[test]
-    fn valid_and_unvalid_date_format() -> Result<(), Box<dyn Error>> {
+    fn valid_and_unvalid_date_format() -> Result<(), ErrBook> {
         assert!(BookDate::new("10.08.25").is_ok());
         assert!(BookDate::new("10/08/25").is_ok());
 
@@ -46,5 +43,13 @@ mod test {
         Ok(())
     }
 
-    // #[test]
+    #[test]
+    fn print_book() -> Result<(), ErrService> {
+        let (room1, _room2, user1, _user2, mut reg_service) = setup_environment()?;
+        reg_service.book_room(&room1, &user1, "20.12.26")?;
+
+        assert!(reg_service.print_book().is_ok());
+
+        Ok(())
+    }
 }
