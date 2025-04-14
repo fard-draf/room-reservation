@@ -118,7 +118,7 @@ impl BookDate {
         }
         let reservation_date: NaiveDate = match NaiveDate::parse_from_str(&cleaned, "%d.%m.%y") {
             Ok(date) => date,
-            Err(e) => Err(ErrDomain::BookCreation(ErrBook::InvalidDateFormat))?,
+            Err(_e) => Err(ErrDomain::BookCreation(ErrBook::InvalidDateFormat))?,
         };
 
         if reservation_date < actual_date {

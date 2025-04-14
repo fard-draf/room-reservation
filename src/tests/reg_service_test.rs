@@ -24,6 +24,7 @@ mod test {
         assert!(BookDate::new("10/08/25").is_ok());
 
         assert!(BookDate::new("10/08/2025").is_err());
+        assert!(BookDate::new("100825").is_err());
         assert!(BookDate::new("20.07.1987").is_err());
         assert!(BookDate::new("24.7.93").is_err());
         assert!(BookDate::new("21031962").is_err());
@@ -52,6 +53,7 @@ mod test {
 
         assert!(reg_service.book_room(&room1, &user1, "10.02.26").is_ok());
         assert!(reg_service.book_room(&room1, &user2, "10.02.26").is_err());
+        assert!(reg_service.book_room(&room2, &user2, "10.02.26").is_ok());
 
         Ok(())
     }

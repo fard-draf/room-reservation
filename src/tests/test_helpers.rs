@@ -1,34 +1,28 @@
 use crate::{
     domain::{Book, Room, User},
-    error::{ErrDB, ErrDomain, ErrUser},
+    error::{ErrDB, ErrDomain},
     infra::{
-        in_memo_repo::{self, InMemoryRepo},
-        reg_service::{self, RegService},
-        room_service::{self, RoomService},
-        user_service::{self, UserService},
+        in_memo_repo::InMemoryRepo,
+        reg_service::RegService,
+        room_service::RoomService,
+        user_service::UserService,
     },
 };
 
 pub fn default_user1() -> Result<User, ErrDomain> {
-    let user1 = User::new("Carmen Test")?;
-    Ok(user1)
+    Ok(User::new("Carmen Test")?)
 }
 
 pub fn default_user2() -> Result<User, ErrDomain> {
-    let user2 = User::new("Ibrahim Test")?;
-    Ok(user2)
+    Ok(User::new("Ibrahim Test")?)
 }
 
 pub fn default_users() -> Result<(User, User), ErrDomain> {
-    let user1 = User::new("Carmen Test")?;
-    let user2 = User::new("Ibrahim Test")?;
-    Ok((user1, user2))
+    Ok((User::new("Carmen Test")?, User::new("Ibrahim Test")?))
 }
 
 pub fn default_rooms() -> Result<(Room, Room), ErrDomain> {
-    let room1 = Room::new("Test room1")?;
-    let room2 = Room::new("Test room2")?;
-    Ok((room1, room2))
+    Ok((Room::new("Test room1")?, Room::new("Test room2")?))
 }
 
 pub fn init_user_service() -> Result<UserService<InMemoryRepo<User>>, ErrDB> {

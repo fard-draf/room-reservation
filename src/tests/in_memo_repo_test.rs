@@ -6,7 +6,7 @@ mod test {
         error::ErrService,
         infra::in_memo_repo::InMemoryRepo,
         repository::*,
-        tests::test_helpers::{default_users, init_inmemory_repo, init_user_service},
+        tests::test_helpers::{default_users, init_inmemory_repo},
     };
 
     fn initialize_repo<T>() -> Result<(InMemoryRepo<T>, User, User), ErrService> {

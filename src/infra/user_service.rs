@@ -1,6 +1,6 @@
 use crate::{
     domain::User,
-    error::{ErrDB, ErrDomain, ErrService, ErrUser},
+    error::{ErrDB, ErrService},
     repository::DBRepository,
 };
 

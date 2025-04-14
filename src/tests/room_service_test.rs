@@ -3,11 +3,9 @@
 mod test {
     use crate::{
         error::ErrService,
-        infra::{reg_service, room_service},
-        tests::{
-            reg_service_test,
-            test_helpers::{default_rooms, default_user1, init_reg_service, init_room_service},
-        },
+        tests::
+            test_helpers::init_room_service,
+        
     };
 
     #[test]
