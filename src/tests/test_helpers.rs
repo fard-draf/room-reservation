@@ -25,8 +25,6 @@ pub fn default_users() -> Result<(User, User), ErrDomain> {
     Ok((user1, user2))
 }
 
-
-
 pub fn default_rooms() -> Result<(Room, Room), ErrDomain> {
     let room1 = Room::new("Test room1")?;
     let room2 = Room::new("Test room2")?;

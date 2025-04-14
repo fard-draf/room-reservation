@@ -36,7 +36,7 @@ impl<T: DBRepository<Book>> RegService<T> {
 
         if is_already_booked {
             println!("Already booked");
-            return Ok(());
+            return Err(ErrService::BookCreation(ErrBook::AlreadyBooked));
         }
 
         self.repo.insert_data(&book)?;

@@ -34,7 +34,7 @@ impl<T: PartialEq + Debug + Clone> DBRepository<T> for InMemoryRepo<T> {
         }
         Ok(vec)
     }
-    fn is_empty(&self, data: &T) -> Result<bool, ErrDB> {
+    fn is_exist(&self, data: &T) -> Result<bool, ErrDB> {
         if self.repo.iter().any(|x| x == data) {
             Ok(true)
         } else {

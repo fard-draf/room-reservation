@@ -21,8 +21,8 @@ mod test {
         let (mut repo, user1, user2) = initialize_repo()?;
 
         assert!(repo.insert_data(&user1).is_ok());
-        assert_eq!(repo.is_empty(&user1)?, true);
-        assert_eq!(repo.is_empty(&user2)?, false);
+        assert_eq!(repo.is_exist(&user1)?, true);
+        assert_eq!(repo.is_exist(&user2)?, false);
 
         Ok(())
     }
