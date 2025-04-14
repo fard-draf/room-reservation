@@ -1,19 +1,13 @@
 #[cfg(test)]
 
 mod test {
-    use crate::{
-        error::ErrService,
-        tests::
-            test_helpers::init_room_service,
-        
-    };
+    use crate::{error::ErrService, tests::test_helpers::init_room_service};
 
     #[test]
     fn add_and_list_room() -> Result<(), ErrService> {
         let mut room_service = init_room_service()?;
 
-        let add_room_ok = room_service.add_room("El Palaccio");
-        assert!(add_room_ok.is_ok(), "Add room should be ok");
+        assert!(room_service.add_room("El Palaccio").is_ok());
 
         room_service.add_room("Dolce Note")?;
         room_service.add_room("Black room")?;
@@ -51,13 +45,11 @@ mod test {
         assert_eq!(room_service.is_exist_room("La Chambre Noire")?, false);
 
         assert!(
-            room_service.remove_room("La Chambre Jaune").is_ok(),
-            "Remove existing room should be ok"
+            room_service.remove_room("La Chambre Jaune").is_ok()            
         );
 
         assert!(
-            room_service.remove_room("La Chambre Noire").is_err(),
-            "Suppression has to fail"
+            room_service.remove_room("La Chambre Noire").is_err()            
         );
 
         Ok(())

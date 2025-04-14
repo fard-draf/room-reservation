@@ -2,9 +2,7 @@ use crate::{
     domain::{Book, Room, User},
     error::{ErrDB, ErrDomain},
     infra::{
-        in_memo_repo::InMemoryRepo,
-        reg_service::RegService,
-        room_service::RoomService,
+        in_memo_repo::InMemoryRepo, reg_service::RegService, room_service::RoomService,
         user_service::UserService,
     },
 };
