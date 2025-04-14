@@ -2,10 +2,10 @@
 
 mod test {
     use crate::{
-        domain::*,
+        domain::User,
         error::ErrService,
         infra::in_memo_repo::InMemoryRepo,
-        repository::*,
+        repository::DBRepository,
         tests::test_helpers::{default_users, init_inmemory_repo},
     };
 

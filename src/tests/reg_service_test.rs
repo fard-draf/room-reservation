@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod test {
     use crate::{
-        domain::*,
+        domain::BookDate,
         error::{ErrBook, ErrService},
-        tests::test_helpers::*,
+        tests::test_helpers::{default_rooms, default_users, init_reg_service},
     };
 
     #[test]

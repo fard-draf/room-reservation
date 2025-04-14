@@ -1,9 +1,9 @@
 use chrono::{Local, NaiveDate};
 use uuid::Uuid;
 
-use crate::error::*;
+use crate::error::{ErrDomain, ErrUser, ErrRoom, ErrBook};
 
-////////////////////////////USERS/////////////////////////
+////////////////////////////USERS
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct User {
@@ -49,7 +49,8 @@ impl UserName {
     }
 }
 
-///////////////////////ROOMS/////////////////////////
+////////////////////////////ROOMS
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Room {
     id: RoomID,
@@ -94,7 +95,7 @@ impl RoomID {
     }
 }
 
-//////////////////REGISTERY BOOK//////////////////////
+////////////////////////////REGISTERY BOOK
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Book {
