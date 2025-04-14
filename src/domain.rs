@@ -1,7 +1,7 @@
 use chrono::{Local, NaiveDate};
 use uuid::Uuid;
 
-use crate::error::{ErrDomain, ErrUser, ErrRoom, ErrBook};
+use crate::error::{ErrBook, ErrDomain, ErrRoom, ErrUser};
 
 ////////////////////////////USERS
 

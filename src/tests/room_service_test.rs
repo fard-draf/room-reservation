@@ -44,13 +44,9 @@ mod test {
         assert_eq!(room_service.is_exist_room("La Chambre Jaune")?, true);
         assert_eq!(room_service.is_exist_room("La Chambre Noire")?, false);
 
-        assert!(
-            room_service.remove_room("La Chambre Jaune").is_ok()            
-        );
+        assert!(room_service.remove_room("La Chambre Jaune").is_ok());
 
-        assert!(
-            room_service.remove_room("La Chambre Noire").is_err()            
-        );
+        assert!(room_service.remove_room("La Chambre Noire").is_err());
 
         Ok(())
     }

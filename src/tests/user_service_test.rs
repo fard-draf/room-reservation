@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test {
     use crate::{
-        domain::{User,UserName},
+        domain::{User, UserName},
         error::ErrService,
         infra::{in_memo_repo::InMemoryRepo, user_service::UserService},
         tests::test_helpers::{default_user1, default_user2, init_user_service},
