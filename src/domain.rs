@@ -7,28 +7,35 @@ use crate::error::{ErrBook, ErrDomain, ErrRoom, ErrUser};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct User {
-    id: UserID,
-    pub name: UserName,
+    pub id: i32,
+    pub user_name: UserName,
 }
 
 impl User {
+    // pub fn new(name: &str) -> Result<Self, ErrDomain> {
+    //     Ok(Self {
+    //         id: UserID::new(),
+    //         name: UserName::new(name)?,
+    //     })
+    // }
+
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
         Ok(Self {
-            id: UserID::new(),
-            name: UserName::new(name)?,
+            id: 0,
+            user_name: UserName::new(name)?,
         })
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-struct UserID {
-    id: Uuid,
-}
-impl UserID {
-    fn new() -> Self {
-        Self { id: Uuid::new_v4() }
-    }
-}
+// #[derive(Debug, PartialEq, Clone)]
+// struct UserID {
+//     id: Uuid,
+// }
+// impl UserID {
+//     fn new() -> Self {
+//         Self { id: Uuid::new_v4() }
+//     }
+// }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UserName {
@@ -53,15 +60,23 @@ impl UserName {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Room {
-    id: RoomID,
-    pub name: RoomName,
+    pub id: i32,
+    pub room_name: RoomName,
 }
 
 impl Room {
+    //     pub fn new(name: &str) -> Result<Self, ErrDomain> {
+    //         Ok(Self {
+    //             id: RoomID::new(),
+    //             room_name: RoomName::new(name.to_string())?,
+    //         })
+    //     }
+    // }
+
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
         Ok(Self {
-            id: RoomID::new(),
-            name: RoomName::new(name.to_string())?,
+            id: 0,
+            room_name: RoomName::new(name.to_string())?,
         })
     }
 }
@@ -85,22 +100,23 @@ impl RoomName {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct RoomID {
+pub struct RoomID {
     id: Uuid,
 }
 
 impl RoomID {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { id: Uuid::new_v4() }
     }
 }
 
 ////////////////////////////REGISTERY BOOK
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, sqlx::FromRow, PartialEq, Clone)]
 pub struct Book {
-    pub room: Room,
-    pub user: User,
+    pub id: i32,
+    pub room_name: Room,
+    pub user_name: User,
     pub date: BookDate,
 }
 #[derive(Debug, PartialEq, Clone)]

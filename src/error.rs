@@ -1,7 +1,7 @@
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Serialize;
 
@@ -33,6 +33,12 @@ pub enum ErrBook {
 pub enum ErrDB {
     Unreachable,
     DoesntExist,
+}
+
+impl From<ErrDomain> for ErrDB {
+    fn from(_err: ErrDomain) -> Self {
+        ErrDB::Unreachable
+    }
 }
 #[derive(Debug)]
 pub enum ErrDomain {
@@ -99,11 +105,7 @@ impl From<ErrDomain> for ErrService {
     }
 }
 
-
-
 /////////HTTP_ERROR
-
-
 
 #[derive(Debug)]
 pub enum AppError {
@@ -125,7 +127,7 @@ impl IntoResponse for AppError {
             AppError::Internal(msg) => (StatusCode::INTERNAL_SERVER_ERROR, msg),
         };
 
-        let body = Json(ErrorResponse { error: message});
+        let body = Json(ErrorResponse { error: message });
 
         (status, body).into_response()
     }
