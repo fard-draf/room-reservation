@@ -9,17 +9,18 @@ mod test {
         tests::test_helpers::{default_users, init_inmemory_repo},
     };
 
-    fn initialize_repo<T>() -> Result<(InMemoryRepo<T>, User, User), ErrService> {
-        let repo = init_inmemory_repo()?;
-        let (user1, user2) = default_users()?;
+    async fn initialize_repo<T>() -> Result<(InMemoryRepo<T>, User, User), ErrService> {
+        let repo = init_inmemory_repo().await?;
+        let (user1, user2) = default_users().await?;
         Ok((repo, user1, user2))
     }
 
-    #[test]
+    #[tokio::test]
 
-    fn insert_data_in_memory_and_find_it() -> Result<(), ErrService> {
-        let (mut repo, user1, user2) = initialize_repo()?;
+    async fn insert_data_in_memory_and_find_it() -> Result<(), ErrService> {
+        let (mut repo, user1, user2) = initialize_repo().await?;
 
+        
         assert!(repo.insert_data(&user1).is_ok());
         assert_eq!(repo.is_exist(&user1)?, true);
         assert_eq!(repo.is_exist(&user2)?, false);
@@ -27,9 +28,9 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn list_data_and_remove_data() -> Result<(), ErrService> {
-        let (mut repo, user1, user2) = initialize_repo()?;
+    #[tokio::test]
+    async fn list_data_and_remove_data() -> Result<(), ErrService> {
+        let (mut repo, user1, user2) = initialize_repo().await?;
 
         assert!(repo.insert_data(&user1).is_ok());
         assert!(repo.list().is_ok());

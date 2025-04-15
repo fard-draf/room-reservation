@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>>  {
     // let mut _reg_service: RegService<InMemoryRepo<Book>> = RegService::new(repo_reg);
 
     let repo_user: InMemoryRepo<User> = InMemoryRepo::new();
-    let mut user_service: UserService<InMemoryRepo<User>> = UserService::new(repo_user);
+    let user_service: UserService<InMemoryRepo<User>> = UserService::new(repo_user);
     let shared_user_service: SharedUserService<InMemoryRepo<User>> = Arc::new(Mutex::new(user_service));
 
     let app = Router::new()

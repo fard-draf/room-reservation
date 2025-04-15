@@ -15,13 +15,13 @@ impl<T> UserService<T> {
 }
 
 impl<T: DBRepository<User>> UserService<T> {
-    pub fn add_new_user(&mut self, user: &str) -> Result<User, ErrService> {
+    pub async fn add_new_user(&mut self, user: &str) -> Result<User, ErrService> {
         let user = User::new(user)?;
         self.repo.insert_data(&user)?;
         Ok(user)
     }
 
-    pub fn remove_user(&mut self, user: &str) -> Result<(), ErrService> {
+    pub async fn remove_user(&mut self, user: &str) -> Result<(), ErrService> {
         let user_list = self.repo.list()?;
         if let Some(data) = user_list.iter().find(|x| x.name.name == user) {
             return Ok(self.repo.remove_data(data)?);
@@ -30,11 +30,11 @@ impl<T: DBRepository<User>> UserService<T> {
         }
     }
 
-    pub fn list_users(&self) -> Result<Vec<User>, ErrDB> {
+    pub async fn list_users(&self) -> Result<Vec<User>, ErrDB> {
         self.repo.list()
     }
 
-    pub fn is_exist_user(&self, user: &str) -> Result<bool, ErrService> {
+    pub async fn is_exist_user(&self, user: &str) -> Result<bool, ErrService> {
         let user_list = self.repo.list()?;
         if user_list.iter().any(|x| x.name.name == user) {
             Ok(true)

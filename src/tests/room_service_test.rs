@@ -3,9 +3,10 @@
 mod test {
     use crate::{error::ErrService, tests::test_helpers::init_room_service};
 
-    #[test]
-    fn add_and_list_room() -> Result<(), ErrService> {
-        let mut room_service = init_room_service()?;
+    #[tokio::test]
+
+    async fn add_and_list_room() -> Result<(), ErrService> {
+        let mut room_service = init_room_service().await?;
 
         assert!(room_service.add_room("El Palaccio").is_ok());
 
@@ -17,9 +18,10 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn create_an_invalid_room() -> Result<(), ErrService> {
-        let mut room_service = init_room_service()?;
+    #[tokio::test]
+
+    async fn create_an_invalid_room() -> Result<(), ErrService> {
+        let mut room_service = init_room_service().await?;
 
         assert!(
             room_service
@@ -36,9 +38,10 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn remove_an_existing_and_unexisting_room() -> Result<(), ErrService> {
-        let mut room_service = init_room_service()?;
+    #[tokio::test]
+
+    async fn remove_an_existing_and_unexisting_room() -> Result<(), ErrService> {
+        let mut room_service = init_room_service().await?;
         room_service.add_room("La Chambre Jaune")?;
 
         assert_eq!(room_service.is_exist_room("La Chambre Jaune")?, true);
@@ -51,9 +54,10 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn find_existing_and_unexisting_room() -> Result<(), ErrService> {
-        let mut room_service = init_room_service()?;
+    #[tokio::test]
+
+    async fn find_existing_and_unexisting_room() -> Result<(), ErrService> {
+        let mut room_service = init_room_service().await?;
         room_service.add_room("Palaccio")?;
 
         assert_eq!(room_service.is_exist_room("Palaccio")?, true);

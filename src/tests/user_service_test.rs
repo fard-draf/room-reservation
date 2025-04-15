@@ -7,25 +7,27 @@ mod test {
         tests::test_helpers::{default_user1, default_user2, init_user_service},
     };
 
-    #[test]
-    fn add_and_list_user() -> Result<(), ErrService> {
-        let mut user_service = init_user_service()?;
+    #[tokio::test]
 
-        let user1_name = &(default_user1()?).name.name;
-        let user2_name = &(default_user2()?).name.name;
+    async fn add_and_list_user() -> Result<(), ErrService> {
+        let mut user_service = init_user_service().await?;
 
-        assert!(user_service.add_new_user(&user1_name).is_ok());
-        assert!(user_service.add_new_user(&user2_name).is_ok());
+        let user1_name = &(default_user1().await?).name.name;
+        let user2_name = &(default_user2().await?).name.name;
 
-        let users = user_service.list_users()?;
+        assert!(user_service.add_new_user(&user1_name).await.is_ok());
+        assert!(user_service.add_new_user(&user2_name).await.is_ok());
+
+        let users = user_service.list_users().await?;
 
         assert_eq!(users.len(), 2);
 
         Ok(())
     }
 
-    #[test]
-    fn create_an_invalid_user_too_short_or_too_long() -> Result<(), ErrService> {
+    #[tokio::test]
+
+    async fn create_an_invalid_user_too_short_or_too_long() -> Result<(), ErrService> {
         assert!(UserName::new("\t \t \t \t Daniel \t \t \t ").is_ok());
         assert!(UserName::new("A").is_err());
         assert!(
@@ -35,17 +37,18 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn remove_an_existing_and_unexisting_user() -> Result<(), ErrService> {
-        let mut user_service: UserService<InMemoryRepo<User>> = init_user_service()?;
+    #[tokio::test]
 
-        user_service.add_new_user("Boris")?;
+    async fn remove_an_existing_and_unexisting_user() -> Result<(), ErrService> {
+        let mut user_service: UserService<InMemoryRepo<User>> = init_user_service().await?;
 
-        assert!(user_service.is_exist_user("Boris").is_ok());
-        assert_eq!(user_service.is_exist_user("Joris")?, false);
+        user_service.add_new_user("Boris").await?;
 
-        assert!(user_service.remove_user("Boris").is_ok());
-        assert!(user_service.remove_user("Joris").is_err());
+        assert!(user_service.is_exist_user("Boris").await.is_ok());
+        assert_eq!(user_service.is_exist_user("Joris").await?, false);
+
+        assert!(user_service.remove_user("Boris").await.is_ok());
+        assert!(user_service.remove_user("Joris").await.is_err());
 
         Ok(())
     }

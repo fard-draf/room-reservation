@@ -1,8 +1,14 @@
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Deserialize)]
 pub struct CreateUserDto {
     pub name: String,
+}
+
+#[derive(Deserialize)]
+pub struct DeleteUserDto {
+    pub name: String,    
 }
 
 #[derive(Serialize)]
