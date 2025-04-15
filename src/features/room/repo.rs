@@ -1,4 +1,10 @@
-use crate::{domain::Room, dto::room_dto::RoomRowDto, error::ErrDB, infra::db::DBClient};
+use crate::{
+    domain::Room,
+    features::room::dto::RoomRowDto,
+    error::ErrDB, 
+    infra::db::DBClient
+};
+
 use async_trait::async_trait;
 
 #[async_trait]

@@ -1,8 +1,5 @@
 pub mod domain;
-pub mod dto;
-pub mod error;
-pub mod handlers;
+pub mod features;
+pub mod app;
 pub mod infra;
-// pub mod repository;
-pub mod routes;
-// pub mod tests;
+pub mod error;

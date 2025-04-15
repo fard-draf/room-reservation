@@ -1,21 +1,21 @@
 use crate::{
     domain::{Book, BookDate, Room, User},
     error::{ErrBook, ErrDomain, ErrService},
-    // repository::DBRepository,
-    infra::in_memo_repo::InMemoryRepo,
 };
 
-pub struct RegService {
-    repo: InMemoryRepo<Book>,
+use super::repo::BookRepo;
+
+pub struct BookingService<T> {
+    repo: T,
 }
 
-impl RegService {
-    pub fn new(repo: InMemoryRepo<Book>) -> Self {
+impl <T> BookingService <T> {
+    pub fn new(repo: T) -> Self {
         Self { repo }
     }
 }
 
-impl RegService {
+impl <T: BookRepo> BookingService <T>{
     pub async fn book_room(
         &mut self,
         room: &Room,
@@ -31,7 +31,7 @@ impl RegService {
             date,
         };
 
-        let all_book = self.repo.list().await?;
+        let all_book = self.repo.get_all_books().await?;
         let is_already_booked = all_book.iter().any(|x| {
             (x.date.date == book.date.date) && (x.room_name.room_name.name == room.room_name.name)
         });
@@ -41,13 +41,13 @@ impl RegService {
             return Err(ErrService::BookCreation(ErrBook::AlreadyBooked));
         }
 
-        self.repo.insert_data(&book).await?;
+        self.repo.insert_book(&book).await?;
         println!("{:?} reserved on {:?}", room.room_name, desired_date);
 
         Ok(())
     }
 
     pub async fn print_book(&self) -> Result<Vec<Book>, ErrService> {
-        Ok(self.repo.list().await?)
+        Ok(self.repo.get_all_books().await?)
     }
 }

@@ -3,7 +3,7 @@ use crate::{
     error::{ErrDB, ErrService},
 };
 
-use super::user_repo::UserRepo;
+use super::repo::UserRepo;
 
 pub struct UserService<T> {
     repo: T,

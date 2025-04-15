@@ -1,15 +1,20 @@
-use crate::{domain::Book, dto::book_dto::BookRowDto, error::ErrDB, infra::db::DBClient};
+use crate::{
+    domain::Book, 
+    features::booking::dto::BookRowDto, 
+    error::ErrDB, 
+    infra::db::DBClient};
+
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait RegRepo {
+pub trait BookRepo {
     async fn insert_book(&self, book: &Book) -> Result<Book, ErrDB>;
     async fn delete_book_by_id(&self, id: i32) -> Result<(), ErrDB>;
     async fn get_all_books(&self) -> Result<Vec<Book>, ErrDB>;
 }
 
 #[async_trait]
-impl RegRepo for DBClient {
+impl BookRepo for DBClient {
     async fn insert_book(&self, book: &Book) -> Result<Book, ErrDB> {
         let dto = sqlx::query_as::<_, BookRowDto>(
             "INSERT INTO books (room, user, date) VALUES ($1, $2, $3) RETURNING id, room, user, date"

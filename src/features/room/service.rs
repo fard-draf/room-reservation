@@ -3,7 +3,7 @@ use crate::{
     error::{ErrDB, ErrService},
 };
 
-use super::room_repo::RoomRepo;
+use super::repo::RoomRepo;
 
 pub struct RoomService<T> {
     repo: T,
