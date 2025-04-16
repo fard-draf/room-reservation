@@ -1,14 +1,10 @@
-use crate::{
-    domain::User,
-    features::user::dto::UserRowDto, 
-    error::ErrDB, 
-    infra::db::DBClient};
+use crate::{domain::User, error::ErrDB, features::user::dto::UserRowDto, infra::db::DBClient};
 use async_trait::async_trait;
 
 #[async_trait]
 pub trait UserRepo {
     async fn insert_user(&self, user: &User) -> Result<User, ErrDB>;
-    async fn delete_user_by_id(&self, name: &str) -> Result<bool, ErrDB>;
+    async fn delete_user_by_name(&self, name: &str) -> Result<bool, ErrDB>;
     async fn get_all_users(&self) -> Result<Vec<User>, ErrDB>;
 }
 
@@ -27,7 +23,7 @@ impl UserRepo for DBClient {
         Ok(user)
     }
 
-    async fn delete_user_by_id(&self, name: &str) -> Result<bool, ErrDB> {
+    async fn delete_user_by_name(&self, name: &str) -> Result<bool, ErrDB> {
         let result = sqlx::query("DELETE FROM users WHERE user_name = $1")
             .bind(name)
             .execute(&self.pool)

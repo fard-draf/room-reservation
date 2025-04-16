@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    domain::{Book, BookDate, Room, User},
+    domain::{Book, BookDate, Room, RoomName, User, UserName},
     error::ErrDomain,
 };
 
@@ -11,6 +11,11 @@ pub struct CreateBookDto {
     pub room_name: String,
     pub user_name: String,
     pub date: String,
+}
+
+#[derive(Deserialize)]
+pub struct DeleteBookByIdDto {
+    pub id: i32,
 }
 
 #[derive(Serialize)]
@@ -36,8 +41,8 @@ impl TryFrom<CreateBookDto> for Book {
     fn try_from(dto: CreateBookDto) -> Result<Self, Self::Error> {
         Ok(Book {
             id: 0,
-            room_name: Room::new(&dto.room_name)?,
-            user_name: User::new(&dto.user_name)?,
+            room_name: RoomName::new(&dto.room_name)?,
+            user_name: UserName::new(&dto.user_name)?,
             date: BookDate::new(&dto.date)?,
         })
     }
@@ -49,8 +54,8 @@ impl TryFrom<BookRowDto> for Book {
     fn try_from(dto: BookRowDto) -> Result<Self, Self::Error> {
         Ok(Book {
             id: dto.id,
-            room_name: Room::new(&dto.room_name)?,
-            user_name: User::new(&dto.user_name)?,
+            room_name: RoomName::new(&dto.room_name)?,
+            user_name: UserName::new(&dto.user_name)?,
             date: BookDate::new(&dto.date.to_string())?,
         })
     }
@@ -60,8 +65,8 @@ impl From<Book> for BookDto {
     fn from(book: Book) -> Self {
         BookDto {
             id: book.id,
-            room_name: book.room_name.room_name.name,
-            user_name: book.user_name.user_name.name,
+            room_name: book.room_name.name,
+            user_name: book.user_name.name,
             date: book.date.date.format("%d.%m.%y").to_string(),
         }
     }

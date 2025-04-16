@@ -1,15 +1,11 @@
 use axum::{
-   routing::{delete, get, post}, Router
+    Router,
+    routing::{delete, get, post},
 };
 
 use crate::{
-    features::user::
-        handlers::{
-            create_user,
-            delete_user,
-            list_users
-            },
-        app::state::AppState,
+    app::state::AppState,
+    features::user::handlers::{create_user, delete_user, list_users},
 };
 
 pub fn user_routes() -> Router<AppState> {

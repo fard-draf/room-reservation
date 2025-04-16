@@ -22,10 +22,10 @@ impl<T: RoomRepo> RoomService<T> {
         Ok(room)
     }
 
-    pub async fn delete_room(&mut self, room: &str) -> Result<(), ErrService> {
+    pub async fn delete_room_by_id(&mut self, room: i32) -> Result<(), ErrService> {
         let room_list = self.repo.get_all_rooms().await?;
-        if let Some(data) = room_list.iter().find(|x| x.room_name.name == room) {
-            return Ok(self.repo.delete_room_by_name(data).await?);
+        if let Some(_id) = room_list.iter().find(|x| x.id == room) {
+            return Ok(self.repo.delete_room_by_id(room).await?);
         } else {
             Err(ErrService::DbRequest(ErrDB::Unreachable))
         }

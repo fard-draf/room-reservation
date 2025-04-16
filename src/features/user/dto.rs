@@ -10,7 +10,7 @@ pub struct CreateUserDto {
     pub user_name: String,
 }
 
-pub struct DeleteUserByDto {
+pub struct DeleteUserByIdDto {
     pub user_id: i32,
 }
 

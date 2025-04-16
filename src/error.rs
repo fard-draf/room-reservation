@@ -4,6 +4,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use serde::Serialize;
+use serde_json::json;
 
 #[derive(Debug)]
 
@@ -33,6 +34,13 @@ pub enum ErrBook {
 pub enum ErrDB {
     Unreachable,
     DoesntExist,
+}
+
+impl IntoResponse for ErrDB {
+    fn into_response(self) -> Response {
+        let body = Json(json!({ "error": "Service error" }));
+        (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
+    }
 }
 
 impl From<ErrDomain> for ErrDB {
@@ -73,6 +81,13 @@ pub enum ErrService {
     RoomCreation(ErrRoom),
     DbRequest(ErrDB),
     Domain(ErrDomain),
+}
+
+impl IntoResponse for ErrService {
+    fn into_response(self) -> Response {
+        let body = Json(json!({ "error": "Service error" }));
+        (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
+    }
 }
 
 impl From<ErrUser> for ErrService {

@@ -1,5 +1,5 @@
-pub mod domain;
-pub mod features;
 pub mod app;
-pub mod infra;
+pub mod domain;
 pub mod error;
+pub mod features;
+pub mod infra;

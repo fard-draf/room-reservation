@@ -23,7 +23,7 @@ impl<T: UserRepo> UserService<T> {
     }
 
     pub async fn delete_user(&mut self, name: &str) -> Result<(), ErrService> {
-        let deleted = self.repo.delete_user_by_id(name).await?;
+        let deleted = self.repo.delete_user_by_name(name).await?;
         if deleted {
             Ok(())
         } else {

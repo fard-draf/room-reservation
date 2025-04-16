@@ -76,7 +76,7 @@ impl Room {
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
         Ok(Self {
             id: 0,
-            room_name: RoomName::new(name.to_string())?,
+            room_name: RoomName::new(name)?,
         })
     }
 }
@@ -87,14 +87,16 @@ pub struct RoomName {
 }
 
 impl RoomName {
-    pub fn new(mut name: String) -> Result<Self, ErrDomain> {
-        name = name.trim().to_string();
+    pub fn new(mut name: &str) -> Result<Self, ErrDomain> {
+        name = name.trim();
         if name.len() <= 2 {
             return Err(ErrDomain::RoomCreation(ErrRoom::InvalidNameTooShort));
         } else if name.len() >= 17 {
             return Err(ErrDomain::RoomCreation(ErrRoom::InvalidNameTooLong));
         } else {
-            Ok(Self { name })
+            Ok(Self {
+                name: name.to_string(),
+            })
         }
     }
 }
@@ -115,8 +117,8 @@ impl RoomID {
 #[derive(Debug, sqlx::FromRow, PartialEq, Clone)]
 pub struct Book {
     pub id: i32,
-    pub room_name: Room,
-    pub user_name: User,
+    pub room_name: RoomName,
+    pub user_name: UserName,
     pub date: BookDate,
 }
 #[derive(Debug, PartialEq, Clone)]

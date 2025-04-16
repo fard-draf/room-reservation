@@ -1,50 +1,37 @@
-use axum::{
-    extract::State,
-    response::IntoResponse,
-    Json,
-};
+use axum::{Json, extract::State, response::IntoResponse};
 
-
-use std:: sync::Arc;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::{
     app::state::AppState,
+    error::{ErrDB, ErrService},
     features::user::{
         dto::{CreateUserDto, UserDto},
-        repo::UserRepo,
-        service::UserService
+        service::UserService,
     },
-    error::{ErrDB, ErrService},   
 };
+
+use super::dto::DeleteUserByIdDto;
 
 pub type SharedUserService<T> = Arc<Mutex<UserService<T>>>;
 
-pub async fn create_user<T> (
+pub async fn create_user(
     State(state): State<AppState>,
     Json(payload): Json<CreateUserDto>,
-) -> Result<impl IntoResponse, ErrService>
-where 
-    T: UserRepo + Send + 'static
-    {
-        let service = state.user_service.lock().await;
+) -> Result<impl IntoResponse, ErrService> {
+    let service = state.user_service.lock().await;
 
-        let dto = service
-            .add_user(&payload.user_name)
-            .await?;
-        let user_dto = UserDto {
-            id: dto.id,
-            user_name: dto.user_name.name,
-        };
+    let dto = service.add_user(&payload.user_name).await?;
+    let user_dto = UserDto {
+        id: dto.id,
+        user_name: dto.user_name.name,
+    };
 
-        Ok(Json(user_dto))
+    Ok(Json(user_dto))
 }
 
-pub async fn list_users(
-    State(state): State<AppState>,
-) -> Result<impl IntoResponse, ErrDB> 
-
-{
+pub async fn list_users(State(state): State<AppState>) -> Result<impl IntoResponse, ErrDB> {
     let service = state.user_service.lock().await;
     let users = service.list_users().await?;
 
@@ -62,16 +49,10 @@ pub async fn list_users(
 pub async fn delete_user(
     State(state): State<AppState>,
     Json(payload): Json<CreateUserDto>,
-) -> Result<impl IntoResponse, ErrService> 
-
-{
+) -> Result<impl IntoResponse, ErrService> {
     let mut service = state.user_service.lock().await;
-    
-    let dto = service
-        .delete_user(&payload.user_name)
-        .await?;
 
+    service.delete_user(&payload.user_name).await?;
 
     Ok(())
-
 }

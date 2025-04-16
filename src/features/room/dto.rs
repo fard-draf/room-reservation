@@ -11,6 +11,11 @@ pub struct CreateRoomDto {
     pub room_name: String,
 }
 
+#[derive(Deserialize)]
+pub struct DeleteRoomByIdDto {
+    pub id: i32,
+}
+
 #[derive(Serialize)]
 pub struct RoomDto {
     pub id: i32,
@@ -29,7 +34,7 @@ impl TryFrom<CreateRoomDto> for Room {
     fn try_from(dto: CreateRoomDto) -> Result<Self, Self::Error> {
         Ok(Room {
             id: 0,
-            room_name: RoomName::new(dto.room_name)?,
+            room_name: RoomName::new(&dto.room_name)?,
         })
     }
 }
@@ -40,7 +45,7 @@ impl TryFrom<RoomRowDto> for Room {
     fn try_from(dto: RoomRowDto) -> Result<Self, Self::Error> {
         Ok(Room {
             id: dto.id,
-            room_name: RoomName::new(dto.room_name)?,
+            room_name: RoomName::new(&dto.room_name)?,
         })
     }
 }

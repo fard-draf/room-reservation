@@ -1,16 +1,11 @@
-use crate::{
-    domain::Room,
-    features::room::dto::RoomRowDto,
-    error::ErrDB, 
-    infra::db::DBClient
-};
+use crate::{domain::Room, error::ErrDB, features::room::dto::RoomRowDto, infra::db::DBClient};
 
 use async_trait::async_trait;
 
 #[async_trait]
 pub trait RoomRepo {
     async fn insert_room(&self, room: &Room) -> Result<(), ErrDB>;
-    async fn delete_room_by_name(&self, room: &Room) -> Result<(), ErrDB>;
+    async fn delete_room_by_id(&self, room: i32) -> Result<(), ErrDB>;
     async fn get_all_rooms(&self) -> Result<Vec<Room>, ErrDB>;
 }
 
@@ -26,9 +21,9 @@ impl RoomRepo for DBClient {
         Ok(())
     }
 
-    async fn delete_room_by_name(&self, room_name: &Room) -> Result<(), ErrDB> {
-        sqlx::query("DELETE FROM rooms WHERE name = $1")
-            .bind(room_name.room_name.name.clone())
+    async fn delete_room_by_id(&self, room_name: i32) -> Result<(), ErrDB> {
+        sqlx::query("DELETE FROM rooms WHERE id = $1")
+            .bind(room_name)
             .execute(&self.pool)
             .await
             .map_err(|_e| ErrDB::DoesntExist)?;
