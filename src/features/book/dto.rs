@@ -57,7 +57,7 @@ impl TryFrom<BookRowDto> for Book {
             id: dto.id,
             room_name: RoomName::new(&dto.room_name)?,
             user_name: UserName::new(&dto.user_name)?,
-            date: BookDate::new_from_naive(dto.date.clone())?,
+            date: BookDate::new_from_naive(dto.date)?,
         })
     }
 }

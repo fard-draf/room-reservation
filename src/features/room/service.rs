@@ -25,7 +25,7 @@ impl<T: RoomRepo> RoomService<T> {
     pub async fn delete_room_by_id(&mut self, room: i32) -> Result<(), ErrService> {
         let deleted = self.repo.delete_room_by_id(room).await?;
         if deleted {
-            return Ok(());
+            Ok(())
         } else {
             Err(ErrService::Repo(ErrRepo::Unreachable))
         }

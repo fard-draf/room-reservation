@@ -1,5 +1,4 @@
 use chrono::NaiveDate;
-use uuid::Uuid;
 
 use crate::error::{ErrBook, ErrDomain, ErrRoom, ErrUser};
 
@@ -45,7 +44,7 @@ impl UserName {
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
         let cleaned_name = name.trim();
         if cleaned_name.len() <= 2 {
-            return Err(ErrDomain::User(ErrUser::InvalidNameTooShort));
+            Err(ErrDomain::User(ErrUser::InvalidNameTooShort))
         } else if cleaned_name.len() >= 35 {
             return Err(ErrDomain::User(ErrUser::InvalidNameTooLong));
         } else {
@@ -90,7 +89,7 @@ impl RoomName {
     pub fn new(mut name: &str) -> Result<Self, ErrDomain> {
         name = name.trim();
         if name.len() <= 2 {
-            return Err(ErrDomain::Room(ErrRoom::InvalidNameTooShort));
+            Err(ErrDomain::Room(ErrRoom::InvalidNameTooShort))
         } else if name.len() >= 17 {
             return Err(ErrDomain::Room(ErrRoom::InvalidNameTooLong));
         } else {
@@ -101,19 +100,18 @@ impl RoomName {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct RoomID {
-    id: Uuid,
-}
+// #[derive(Debug, PartialEq, Clone)]
+// // pub struct RoomID {
+// //     id: Uuid,
+// // }
 
-impl RoomID {
-    pub fn new() -> Self {
-        Self { id: Uuid::new_v4() }
-    }
-}
+// // impl RoomID {
+// //     pub fn new() -> Self {
+// //         Self { id: Uuid::new_v4() }
+// //     }
+// // }
 
 ////////////////////////////REGISTERY BOOK
-
 #[derive(Debug, sqlx::FromRow, PartialEq, Clone)]
 pub struct Book {
     pub id: i32,

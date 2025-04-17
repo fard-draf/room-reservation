@@ -24,7 +24,7 @@ impl<T: UserRepo> UserService<T> {
     }
 
     pub async fn update_user(&self, new_name: &str, old_name: &str) -> Result<User, ErrService> {
-        let user = self.repo.update_user(&old_name, new_name).await?;
+        let user = self.repo.update_user(old_name, new_name).await?;
 
         Ok(user)
     }

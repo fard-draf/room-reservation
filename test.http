@@ -1,0 +1,84 @@
+### Créer un user
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "user_name": "user1"
+}
+### Update User
+POST http://localhost:3000/users/update
+Content-Type: application/json
+
+{
+  "old_name": "YES GROS",
+  "new_name": "Jean jacques de la lande"
+}
+### Lister
+GET http://localhost:3000/users
+
+### Supprimer
+DELETE http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "user_name": "user6"
+}
+
+
+
+
+### ROOMS
+
+### Créer une salle
+POST http://localhost:3000/room
+Content-Type: application/json
+
+{
+  "room_name": "room3"
+}
+
+### Lister les salles
+GET http://localhost:3000/room
+
+
+###Supprimer une salle
+DELETE http://localhost:3000/room
+Content-Type: application/json
+
+{
+  "id": 17
+
+}
+
+
+
+
+### BOOK
+
+### Create a book
+
+POST http://localhost:3000/book
+Content-Type: application/json
+
+{
+  "room_name": "room3",
+  "user_name": "user4",
+  "date": "30.12.26"
+}
+
+### List books
+GET http://localhost:3000/book
+
+
+### Remove a book
+DELETE http://localhost:3000/book
+Content-Type: application/json
+
+{
+  "id": 34
+}
+
+### Remove all books
+DELETE http://localhost:3000/book/delete_all
+
+

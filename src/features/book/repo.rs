@@ -43,7 +43,7 @@ impl BookRepo for DBClient {
                 )
                 .bind(&book.room_name.name)
                 .bind(&book.user_name.name)
-                .bind(&book.date.date)
+                .bind(book.date.date)
                 .fetch_one(&self.pool)
                 .await
                 .map_err(|e: sqlx::Error| {

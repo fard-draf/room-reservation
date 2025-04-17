@@ -18,7 +18,8 @@ where
     T: Clone + PartialEq + Send + Sync + 'static,
 {
     pub async fn insert_data(&mut self, data: &T) -> Result<(), ErrRepo> {
-        Ok(self.repo.push(data.clone()))
+        self.repo.push(data.clone());
+        Ok(())
     }
 
     pub async fn remove_data(&mut self, data: &T) -> Result<(), ErrRepo> {
@@ -31,7 +32,7 @@ where
     }
     pub async fn list(&self) -> Result<Vec<T>, ErrRepo> {
         let mut vec = vec![];
-        for (_i, element) in self.repo.iter().enumerate() {
+        for element in self.repo.iter() {
             vec.push(element.clone());
         }
         Ok(vec)

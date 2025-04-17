@@ -27,12 +27,10 @@ impl<T: BookRepo> BookService<T> {
 
         let book = Book::new(room, user, date)?;
 
-        let is_already_booked = self
-            .repo
-            .get_all_books()
-            .await?
-            .iter()
-            .any(|x| (x.date.date == book.date.date) && (x.room_name.name == room.to_string()));
+        let is_already_booked =
+            self.repo.get_all_books().await?.iter().any(|x| {
+                (x.date.date == book.date.date) && (x.room_name.name == *room.to_string())
+            });
 
         if is_already_booked {
             println!("Already booked");
