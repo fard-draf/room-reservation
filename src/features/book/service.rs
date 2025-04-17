@@ -66,5 +66,4 @@ impl<T: BookRepo> BookService<T> {
             Err(ErrService::Repo(ErrRepo::UnableToDelete))
         }
     }
-
 }

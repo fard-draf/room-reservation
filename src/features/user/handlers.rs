@@ -7,10 +7,12 @@ use crate::{
     app::state::AppState,
     error::ErrService,
     features::user::{
-        dto::{CreateUserDto, UserDto},
+        dto::{CreateUserDto, UpdateUserDto, UserDto},
         service::UserService,
     },
 };
+
+use super::dto::UpdateUserNameDto;
 
 pub type SharedUserService<T> = Arc<Mutex<UserService<T>>>;
 
@@ -21,9 +23,28 @@ pub async fn create_user(
     let service = state.user_service.lock().await;
 
     let dto = service.add_user(&payload.user_name).await?;
+
     let user_dto = UserDto {
         id: dto.id,
         user_name: dto.user_name.name,
+    };
+
+    Ok(Json(user_dto))
+}
+
+pub async fn update_user(
+    State(state): State<AppState>,
+    Json(payload): Json<UpdateUserNameDto>,
+) -> Result<impl IntoResponse, ErrService> {
+    let service = state.user_service.lock().await;
+
+    let dto = service
+        .update_user(&payload.new_name, &payload.old_name)
+        .await?;
+
+    let user_dto = UpdateUserDto {
+        id: dto.id,
+        new_name: dto.user_name.name,
     };
 
     Ok(Json(user_dto))

@@ -1,5 +1,5 @@
 use crate::{
-    domain::User,
+    domain::{User, UserName},
     error::{ErrRepo, ErrService, ErrUser},
     features::user::dto::UserRowDto,
     infra::db::DBClient,
@@ -9,6 +9,7 @@ use async_trait::async_trait;
 #[async_trait]
 pub trait UserRepo {
     async fn insert_user(&self, user: &User) -> Result<User, ErrService>;
+    async fn update_user(&self, old_name: &str, new_name: &str) -> Result<User, ErrService>;
     async fn delete_user_by_name(&self, name: &str) -> Result<bool, ErrService>;
     async fn get_all_users(&self) -> Result<Vec<User>, ErrService>;
 }
@@ -31,6 +32,30 @@ impl UserRepo for DBClient {
         if existing_users.contains(&user.user_name) {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
+        let user: User = row.try_into()?;
+        Ok(user)
+    }
+
+    async fn update_user(&self, old_name: &str, new_name: &str) -> Result<User, ErrService> {
+        let old_name = UserName::new(old_name)?;
+        let name_exists = self
+            .get_all_users()
+            .await?
+            .into_iter()
+            .any(|x| x.user_name == old_name);
+        if !name_exists {
+            return Err(ErrService::User(ErrUser::UserNotFound));
+        }
+
+        let row = sqlx::query_as::<_, UserRowDto>(
+            "UPDATE users SET user_name = $1 WHERE user_name = $2 RETURNING id, user_name",
+        )
+        .bind(new_name)
+        .bind(old_name.name)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|_e| ErrRepo::BadRequest)?;
+
         let user: User = row.try_into()?;
         Ok(user)
     }

@@ -66,12 +66,11 @@ pub async fn delete_book(
 }
 
 pub async fn delete_all_books(
-    State(state): State<AppState>
+    State(state): State<AppState>,
 ) -> Result<impl IntoResponse, ErrService> {
     let mut service = state.book_service.lock().await;
 
     service.delete_all_book().await?;
-    
+
     Ok(())
 }
-

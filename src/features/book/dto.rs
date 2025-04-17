@@ -18,8 +18,6 @@ pub struct DeleteBookByIdDto {
     pub id: i32,
 }
 
-
-
 #[derive(Serialize)]
 pub struct BookDto {
     pub id: i32,
@@ -64,22 +62,7 @@ impl TryFrom<BookRowDto> for Book {
     }
 }
 
-// impl TryFrom<Book> for BookDto {
-//     type Error = ErrDomain;
-
-//     fn try_from(book: Book) -> Result<Self, Self::Error> {
-//         Ok(BookDto {
-//             id: book.id,
-//             room_name: book.room_name.name,
-//             user_name: book.user_name.name,
-//             date: book.date.date,
-//         })
-//     }
-// }
-
 impl From<Book> for BookDto {
-    
-
     fn from(book: Book) -> Self {
         BookDto {
             id: book.id,
@@ -89,4 +72,3 @@ impl From<Book> for BookDto {
         }
     }
 }
-

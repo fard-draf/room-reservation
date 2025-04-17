@@ -17,14 +17,13 @@ pub trait RoomRepo {
 #[async_trait]
 impl RoomRepo for DBClient {
     async fn insert_room(&self, room: &Room) -> Result<Room, ErrService> {
-        
         let mut existing_room = vec![];
         for element in self.get_all_rooms().await? {
             existing_room.push(element.room_name);
         }
         if existing_room.contains(&room.room_name) {
             return Err(ErrService::Room(ErrRoom::AlreadyExist));
-        }        
+        }
         let row = sqlx::query_as::<_, RoomRowDto>(
             "INSERT INTO rooms (room_name) VALUES ($1) RETURNING id, room_name",
         )

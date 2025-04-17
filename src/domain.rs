@@ -127,7 +127,7 @@ impl Book {
         Ok(Self {
             id: 0,
             room_name: RoomName::new(room_name)?,
-            user_name: UserName::new(user_name)?, 
+            user_name: UserName::new(user_name)?,
             date,
         })
     }

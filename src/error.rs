@@ -12,6 +12,7 @@ pub enum ErrUser {
     InvalidNameTooLong,
     InvalidID,
     AlreadyExist,
+    UserNotFound,
 }
 
 #[derive(Debug)]
@@ -123,20 +124,31 @@ impl IntoResponse for ErrService {
             ErrService::Book(ErrBook::RoomNotFound) => bad_request("Room not found in the system"),
             ErrService::Book(ErrBook::UserNotFound) => bad_request("User not found in the system"),
             ErrService::Book(ErrBook::UnableToRead) => bad_request("Unable to read book"),
-            ErrService::Book(ErrBook::InvalidID) => bad_request("Invalid ID request, please check book ID"),
+            ErrService::Book(ErrBook::InvalidID) => {
+                bad_request("Invalid ID request, please check book ID")
+            }
             ///// USER ERROR
-            ErrService::User(ErrUser::InvalidNameTooShort) => bad_request("User's name is too short"),
+            ErrService::User(ErrUser::InvalidNameTooShort) => {
+                bad_request("User's name is too short")
+            }
             ErrService::User(ErrUser::InvalidNameTooLong) => bad_request("User's name is too long"),
-            ErrService::User(ErrUser::InvalidID) => bad_request("User's ID not found in the system"),
+            ErrService::User(ErrUser::InvalidID) => {
+                bad_request("User's ID not found in the system")
+            }
+            ErrService::User(ErrUser::UserNotFound) => bad_request("User not found in the system"),
             ErrService::User(ErrUser::AlreadyExist) => bad_request("User already exists"),
-            
+
             ///// ROOM ERROR
-            ErrService::Room(ErrRoom::InvalidNameTooShort) => bad_request("Room's name is too short"),
+            ErrService::Room(ErrRoom::InvalidNameTooShort) => {
+                bad_request("Room's name is too short")
+            }
             ErrService::Room(ErrRoom::InvalidNameTooLong) => bad_request("Room's name is too long"),
             ErrService::Room(ErrRoom::InvalidID) => bad_request("Invalid room's ID"),
-            ErrService::Room(ErrRoom::AlreadyExist) => bad_request("Room already exists"),       
+            ErrService::Room(ErrRoom::AlreadyExist) => bad_request("Room already exists"),
             ///// TYPE ERROR
-            ErrService::Type(ErrType::RawConversionFailed) => internal_error("Raw conversion failed"),
+            ErrService::Type(ErrType::RawConversionFailed) => {
+                internal_error("Raw conversion failed")
+            }
             ///// DBREQUEST ERR
             ErrService::Repo(ErrRepo::BadRequest) => bad_request("Invalid request"),
             ErrService::Repo(ErrRepo::Unreachable) => {
