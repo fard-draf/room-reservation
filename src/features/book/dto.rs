@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     domain::{Book, BookDate, RoomName, UserName},
-    error::ErrDomain,
+    error::ErrService,
 };
 
 #[derive(Deserialize)]
@@ -17,6 +17,8 @@ pub struct CreateBookDto {
 pub struct DeleteBookByIdDto {
     pub id: i32,
 }
+
+
 
 #[derive(Serialize)]
 pub struct BookDto {
@@ -37,7 +39,7 @@ pub struct BookRowDto {
 }
 
 impl TryFrom<CreateBookDto> for Book {
-    type Error = ErrDomain;
+    type Error = ErrService;
 
     fn try_from(dto: CreateBookDto) -> Result<Self, Self::Error> {
         Ok(Book {
@@ -50,27 +52,41 @@ impl TryFrom<CreateBookDto> for Book {
 }
 
 impl TryFrom<BookRowDto> for Book {
-    type Error = ErrDomain;
+    type Error = ErrService;
 
     fn try_from(dto: BookRowDto) -> Result<Self, Self::Error> {
         Ok(Book {
             id: dto.id,
             room_name: RoomName::new(&dto.room_name)?,
             user_name: UserName::new(&dto.user_name)?,
-            date: BookDate::new_from_naive(dto.date)?,
+            date: BookDate::new_from_naive(dto.date.clone())?,
         })
     }
 }
 
-impl TryFrom<Book> for BookDto {
-    type Error = ErrDomain;
+// impl TryFrom<Book> for BookDto {
+//     type Error = ErrDomain;
 
-    fn try_from(book: Book) -> Result<Self, Self::Error> {
-        Ok(BookDto {
+//     fn try_from(book: Book) -> Result<Self, Self::Error> {
+//         Ok(BookDto {
+//             id: book.id,
+//             room_name: book.room_name.name,
+//             user_name: book.user_name.name,
+//             date: book.date.date,
+//         })
+//     }
+// }
+
+impl From<Book> for BookDto {
+    
+
+    fn from(book: Book) -> Self {
+        BookDto {
             id: book.id,
             room_name: book.room_name.name,
             user_name: book.user_name.name,
             date: book.date.date,
-        })
+        }
     }
 }
+

@@ -5,7 +5,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     app::state::AppState,
-    error::{ErrDB, ErrService},
+    error::ErrService,
     features::user::{
         dto::{CreateUserDto, UserDto},
         service::UserService,
@@ -29,7 +29,7 @@ pub async fn create_user(
     Ok(Json(user_dto))
 }
 
-pub async fn list_users(State(state): State<AppState>) -> Result<impl IntoResponse, ErrDB> {
+pub async fn list_users(State(state): State<AppState>) -> Result<impl IntoResponse, ErrService> {
     let service = state.user_service.lock().await;
     let users = service.list_users().await?;
 

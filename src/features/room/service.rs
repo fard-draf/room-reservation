@@ -1,6 +1,6 @@
 use crate::{
     domain::Room,
-    error::{ErrDB, ErrService},
+    error::{ErrRepo, ErrService},
 };
 
 use super::repo::RoomRepo;
@@ -27,11 +27,11 @@ impl<T: RoomRepo> RoomService<T> {
         if deleted {
             return Ok(());
         } else {
-            Err(ErrService::DBRequest(ErrDB::Unreachable))
+            Err(ErrService::Repo(ErrRepo::Unreachable))
         }
     }
 
-    pub async fn list_rooms(&self) -> Result<Vec<Room>, ErrDB> {
+    pub async fn list_rooms(&self) -> Result<Vec<Room>, ErrService> {
         self.repo.get_all_rooms().await
     }
 

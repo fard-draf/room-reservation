@@ -1,4 +1,4 @@
-use crate::error::ErrDB;
+use crate::error::ErrRepo;
 
 pub struct InMemoryRepo<T> {
     repo: Vec<T>,
@@ -17,26 +17,26 @@ impl<T> InMemoryRepo<T>
 where
     T: Clone + PartialEq + Send + Sync + 'static,
 {
-    pub async fn insert_data(&mut self, data: &T) -> Result<(), ErrDB> {
+    pub async fn insert_data(&mut self, data: &T) -> Result<(), ErrRepo> {
         Ok(self.repo.push(data.clone()))
     }
 
-    pub async fn remove_data(&mut self, data: &T) -> Result<(), ErrDB> {
+    pub async fn remove_data(&mut self, data: &T) -> Result<(), ErrRepo> {
         if let Some(pos) = self.repo.iter().position(|x| x == data) {
             self.repo.remove(pos);
         } else {
-            return Err(ErrDB::Unreachable);
+            return Err(ErrRepo::Unreachable);
         }
         Ok(())
     }
-    pub async fn list(&self) -> Result<Vec<T>, ErrDB> {
+    pub async fn list(&self) -> Result<Vec<T>, ErrRepo> {
         let mut vec = vec![];
         for (_i, element) in self.repo.iter().enumerate() {
             vec.push(element.clone());
         }
         Ok(vec)
     }
-    pub async fn is_exist(&self, data: &T) -> Result<bool, ErrDB> {
+    pub async fn is_exist(&self, data: &T) -> Result<bool, ErrRepo> {
         if self.repo.iter().any(|x| x == data) {
             Ok(true)
         } else {

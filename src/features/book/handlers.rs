@@ -19,7 +19,7 @@ pub async fn create_booking(
     State(state): State<AppState>,
     Json(payload): Json<CreateBookDto>,
 ) -> Result<impl IntoResponse, ErrService> {
-    let mut service = state.book_service.lock().await;
+    let service = state.book_service.lock().await;
 
     let dto = service
         .book_room(&payload.room_name, &payload.user_name, &payload.date)
@@ -38,7 +38,7 @@ pub async fn create_booking(
 pub async fn list_book(State(state): State<AppState>) -> Result<impl IntoResponse, ErrService> {
     let service = state.book_service.lock().await;
     let books = service.list_book().await.map_err(|e| {
-        eprintln!("ERREUR DANS list_book: {:?}", e);
+        eprintln!("List book error: {:?}", e);
         e
     })?;
     let dto: Vec<BookDto> = books
@@ -64,3 +64,14 @@ pub async fn delete_book(
 
     Ok(())
 }
+
+pub async fn delete_all_books(
+    State(state): State<AppState>
+) -> Result<impl IntoResponse, ErrService> {
+    let mut service = state.book_service.lock().await;
+
+    service.delete_all_book().await?;
+    
+    Ok(())
+}
+

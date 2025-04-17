@@ -7,21 +7,22 @@ use serde::Serialize;
 use serde_json::json;
 
 #[derive(Debug)]
-
 pub enum ErrUser {
     InvalidNameTooShort,
     InvalidNameTooLong,
     InvalidID,
+    AlreadyExist,
 }
-#[derive(Debug)]
 
+#[derive(Debug)]
 pub enum ErrRoom {
     InvalidNameTooShort,
     InvalidNameTooLong,
     InvalidID,
+    AlreadyExist,
 }
-#[derive(Debug)]
 
+#[derive(Debug)]
 pub enum ErrBook {
     RoomNotFound,
     UserNotFound,
@@ -29,28 +30,23 @@ pub enum ErrBook {
     InvalidDateFormat,
     InvalidDate,
     InvalidID,
+    UnableToRead,
 }
-#[derive(Debug)]
 
-pub enum ErrDB {
+#[derive(Debug)]
+pub enum ErrType {
+    RawConversionFailed,
+}
+
+#[derive(Debug)]
+pub enum ErrRepo {
     Unreachable,
     DoesntExist,
     RequestError,
     BadRequest,
+    UnableToDelete,
 }
 
-impl IntoResponse for ErrDB {
-    fn into_response(self) -> Response {
-        let body = Json(json!({ "error": "Database error" }));
-        (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
-    }
-}
-
-impl From<ErrDomain> for ErrDB {
-    fn from(_err: ErrDomain) -> Self {
-        ErrDB::Unreachable
-    }
-}
 #[derive(Debug)]
 pub enum ErrDomain {
     Book(ErrBook),
@@ -58,44 +54,39 @@ pub enum ErrDomain {
     User(ErrUser),
 }
 
-impl From<ErrBook> for ErrDomain {
-    fn from(err: ErrBook) -> Self {
-        ErrDomain::Book(err)
-    }
-}
+// #[derive(Debug)]
+
+// pub enum ErrReservation {
+//     Book(ErrBook),
+//     Room(ErrRoom),
+//     User(ErrUser),
+// }
+
+// impl From<ErrRoom> for ErrReservation {
+//     fn from(err: ErrRoom) -> Self {
+//         ErrReservation::Room(err)
+//     }
+// }
+
+// impl From<ErrUser> for ErrReservation {
+//     fn from(err: ErrUser) -> Self {
+//         ErrReservation::User(err)
+//     }
+// }
+
+// impl From<ErrBook> for ErrReservation {
+//     fn from(err: ErrBook) -> Self {
+//         ErrReservation::Book(err)
+//     }
+// }
 #[derive(Debug)]
-
-pub enum ErrReservation {
-    Book(ErrBook),
-    Room(ErrRoom),
-    User(ErrUser),
-}
-
-impl From<ErrRoom> for ErrReservation {
-    fn from(err: ErrRoom) -> Self {
-        ErrReservation::Room(err)
-    }
-}
-
-impl From<ErrUser> for ErrReservation {
-    fn from(err: ErrUser) -> Self {
-        ErrReservation::User(err)
-    }
-}
-
-impl From<ErrBook> for ErrReservation {
-    fn from(err: ErrBook) -> Self {
-        ErrReservation::Book(err)
-    }
-}
-#[derive(Debug)]
-
 pub enum ErrService {
     Book(ErrBook),
     User(ErrUser),
     Room(ErrRoom),
-    DBRequest(ErrDB),
+    Repo(ErrRepo),
     Domain(ErrDomain),
+    Type(ErrType),
 }
 
 fn bad_request(msg: &str) -> Response {
@@ -104,6 +95,22 @@ fn bad_request(msg: &str) -> Response {
 
 fn confict(msg: &str) -> Response {
     (StatusCode::CONFLICT, Json(json!({"error" : msg}))).into_response()
+}
+
+fn unavailable(msg: &str) -> Response {
+    (
+        StatusCode::SERVICE_UNAVAILABLE,
+        Json(json!({"error" : msg})),
+    )
+        .into_response()
+}
+
+fn internal_error(msg: &str) -> Response {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(json!({"error" : msg})),
+    )
+        .into_response()
 }
 
 impl IntoResponse for ErrService {
@@ -115,38 +122,32 @@ impl IntoResponse for ErrService {
             ErrService::Book(ErrBook::InvalidDate) => bad_request("Date already past"),
             ErrService::Book(ErrBook::RoomNotFound) => bad_request("Room not found in the system"),
             ErrService::Book(ErrBook::UserNotFound) => bad_request("User not found in the system"),
-            ErrService::Book(ErrBook::InvalidID) => {
-                bad_request("Invalid ID request, please check book ID")
-            }
-
+            ErrService::Book(ErrBook::UnableToRead) => bad_request("Unable to read book"),
+            ErrService::Book(ErrBook::InvalidID) => bad_request("Invalid ID request, please check book ID"),
             ///// USER ERROR
-            ErrService::User(ErrUser::InvalidNameTooShort) => {
-                bad_request("User's name is too short")
-            }
+            ErrService::User(ErrUser::InvalidNameTooShort) => bad_request("User's name is too short"),
             ErrService::User(ErrUser::InvalidNameTooLong) => bad_request("User's name is too long"),
-            ErrService::User(ErrUser::InvalidID) => {
-                bad_request("User's ID not found in the system")
-            }
-
+            ErrService::User(ErrUser::InvalidID) => bad_request("User's ID not found in the system"),
+            ErrService::User(ErrUser::AlreadyExist) => bad_request("User already exists"),
+            
             ///// ROOM ERROR
-            ErrService::Room(ErrRoom::InvalidNameTooShort) => {
-                bad_request("Room's name is too short")
-            }
+            ErrService::Room(ErrRoom::InvalidNameTooShort) => bad_request("Room's name is too short"),
             ErrService::Room(ErrRoom::InvalidNameTooLong) => bad_request("Room's name is too long"),
             ErrService::Room(ErrRoom::InvalidID) => bad_request("Invalid room's ID"),
-
+            ErrService::Room(ErrRoom::AlreadyExist) => bad_request("Room already exists"),       
+            ///// TYPE ERROR
+            ErrService::Type(ErrType::RawConversionFailed) => internal_error("Raw conversion failed"),
             ///// DBREQUEST ERR
-            ErrService::DBRequest(ErrDB::BadRequest) => bad_request("Invalid request"),
-            ErrService::DBRequest(ErrDB::Unreachable) => {
+            ErrService::Repo(ErrRepo::BadRequest) => bad_request("Invalid request"),
+            ErrService::Repo(ErrRepo::Unreachable) => {
                 let body = Json(json!({"error" : "Database is unreachable"}));
                 (StatusCode::SERVICE_UNAVAILABLE, body).into_response()
             }
-            ErrService::DBRequest(ErrDB::DoesntExist) => {
+            ErrService::Repo(ErrRepo::DoesntExist) => {
                 let body = Json(json!({"error" : "Not found in the system"}));
                 (StatusCode::SERVICE_UNAVAILABLE, body).into_response()
             }
-
-            // ErrService::Domain(ErrDomain::Book(ErrBook::InvalidDate)) => bad_request("Date is already past"),
+            ErrService::Repo(ErrRepo::UnableToDelete) => unavailable("Unable to do this action"),
             _ => {
                 let body = json!({ "error": "Service error" });
                 (StatusCode::INTERNAL_SERVER_ERROR, Json(body)).into_response()
@@ -173,15 +174,21 @@ impl From<ErrRoom> for ErrService {
     }
 }
 
-impl From<ErrDB> for ErrService {
-    fn from(err: ErrDB) -> Self {
-        ErrService::DBRequest(err)
+impl From<ErrRepo> for ErrService {
+    fn from(err: ErrRepo) -> Self {
+        ErrService::Repo(err)
     }
 }
 
 impl From<ErrDomain> for ErrService {
     fn from(err: ErrDomain) -> Self {
         ErrService::Domain(err)
+    }
+}
+
+impl From<ErrType> for ErrService {
+    fn from(err: ErrType) -> Self {
+        ErrService::Type(err)
     }
 }
 

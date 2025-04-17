@@ -1,4 +1,4 @@
-use chrono::{Local, NaiveDate};
+use chrono::NaiveDate;
 use uuid::Uuid;
 
 use crate::error::{ErrBook, ErrDomain, ErrRoom, ErrUser};
@@ -124,14 +124,10 @@ pub struct Book {
 
 impl Book {
     pub fn new(room_name: &str, user_name: &str, date: BookDate) -> Result<Self, ErrDomain> {
-        let id = 0;
-        let room_name = RoomName::new(room_name)?;
-        let user_name = UserName::new(user_name)?;
-
         Ok(Self {
-            id,
-            room_name,
-            user_name,
+            id: 0,
+            room_name: RoomName::new(room_name)?,
+            user_name: UserName::new(user_name)?, 
             date,
         })
     }
@@ -143,8 +139,6 @@ pub struct BookDate {
 
 impl BookDate {
     pub fn new(input_date: &str) -> Result<Self, ErrDomain> {
-        let actual_date = Local::now().date_naive();
-
         let cleaned: String = input_date.trim().replace("/", ".");
 
         if cleaned.len() != 8 {
@@ -154,10 +148,6 @@ impl BookDate {
             Ok(date) => date,
             Err(_e) => Err(ErrDomain::Book(ErrBook::InvalidDateFormat))?,
         };
-
-        // if reservation_date < actual_date {
-        //     return Err(ErrDomain::Book(ErrBook::InvalidDate));
-        // }
 
         Ok(Self {
             date: reservation_date,

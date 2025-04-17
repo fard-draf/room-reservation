@@ -1,6 +1,6 @@
 use crate::{
     domain::User,
-    error::{ErrDB, ErrService},
+    error::{ErrRepo, ErrService},
 };
 
 use super::repo::UserRepo;
@@ -19,6 +19,7 @@ impl<T: UserRepo> UserService<T> {
     pub async fn add_user(&self, name: &str) -> Result<User, ErrService> {
         let user = User::new(name)?;
         let user = self.repo.insert_user(&user).await?;
+        
         Ok(user)
     }
 
@@ -27,11 +28,11 @@ impl<T: UserRepo> UserService<T> {
         if deleted {
             Ok(())
         } else {
-            Err(ErrService::DBRequest(ErrDB::DoesntExist))
+            Err(ErrService::Repo(ErrRepo::DoesntExist))
         }
     }
 
-    pub async fn list_users(&self) -> Result<Vec<User>, ErrDB> {
+    pub async fn list_users(&self) -> Result<Vec<User>, ErrService> {
         self.repo.get_all_users().await
     }
 

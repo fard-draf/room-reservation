@@ -5,7 +5,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     app::state::AppState,
-    error::{ErrDB, ErrService},
+    error::ErrService,
     features::room::{
         dto::{CreateRoomDto, RoomDto},
         service::RoomService,
@@ -31,7 +31,7 @@ pub async fn create_room(
     Ok(Json(room_dto))
 }
 
-pub async fn list_room(State(state): State<AppState>) -> Result<impl IntoResponse, ErrDB> {
+pub async fn list_room(State(state): State<AppState>) -> Result<impl IntoResponse, ErrService> {
     let service = state.room_service.lock().await;
     let rooms = service.list_rooms().await?;
 

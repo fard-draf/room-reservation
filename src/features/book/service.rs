@@ -1,6 +1,6 @@
 use crate::{
     domain::{Book, BookDate},
-    error::{ErrBook, ErrDB, ErrDomain, ErrService},
+    error::{ErrBook, ErrDomain, ErrRepo, ErrService},
 };
 
 use super::repo::BookRepo;
@@ -17,7 +17,7 @@ impl<T> BookService<T> {
 
 impl<T: BookRepo> BookService<T> {
     pub async fn book_room(
-        &mut self,
+        &self,
         room: &str,
         user: &str,
         desired_date: &str,
@@ -27,8 +27,10 @@ impl<T: BookRepo> BookService<T> {
 
         let book = Book::new(room, user, date)?;
 
-        let all_book = self.repo.get_all_books().await?;
-        let is_already_booked = all_book
+        let is_already_booked = self
+            .repo
+            .get_all_books()
+            .await?
             .iter()
             .any(|x| (x.date.date == book.date.date) && (x.room_name.name == room.to_string()));
 
@@ -37,8 +39,8 @@ impl<T: BookRepo> BookService<T> {
             return Err(ErrService::Book(ErrBook::AlreadyBooked));
         }
 
-        self.repo.insert_book(&book).await?;
-        println!("{:?} reserved on {:?}", room, desired_date);
+        let book = self.repo.insert_book(&book).await?;
+        println!("{:?} reserved on {:?}, id: {}", room, desired_date, book.id);
 
         Ok(book)
     }
@@ -52,7 +54,17 @@ impl<T: BookRepo> BookService<T> {
         if deleted {
             Ok(())
         } else {
-            Err(ErrService::DBRequest(ErrDB::DoesntExist))
+            Err(ErrService::Repo(ErrRepo::UnableToDelete))
         }
     }
+
+    pub async fn delete_all_book(&mut self) -> Result<(), ErrService> {
+        let deleted = self.repo.delete_all_book().await?;
+        if deleted {
+            Ok(())
+        } else {
+            Err(ErrService::Repo(ErrRepo::UnableToDelete))
+        }
+    }
+
 }
