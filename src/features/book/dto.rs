@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    domain::{Book, BookDate, Room, RoomName, User, UserName},
+    domain::{Book, BookDate, RoomName, UserName},
     error::ErrDomain,
 };
 
@@ -23,9 +23,10 @@ pub struct BookDto {
     pub id: i32,
     pub room_name: String,
     pub user_name: String,
-    pub date: String,
+    pub date: NaiveDate,
 }
 
+// #[derive(Debug, sqlx::FromRow)]
 #[derive(Debug, sqlx::FromRow)]
 
 pub struct BookRowDto {
@@ -56,18 +57,20 @@ impl TryFrom<BookRowDto> for Book {
             id: dto.id,
             room_name: RoomName::new(&dto.room_name)?,
             user_name: UserName::new(&dto.user_name)?,
-            date: BookDate::new(&dto.date.to_string())?,
+            date: BookDate::new_from_naive(dto.date)?,
         })
     }
 }
 
-impl From<Book> for BookDto {
-    fn from(book: Book) -> Self {
-        BookDto {
+impl TryFrom<Book> for BookDto {
+    type Error = ErrDomain;
+
+    fn try_from(book: Book) -> Result<Self, Self::Error> {
+        Ok(BookDto {
             id: book.id,
             room_name: book.room_name.name,
             user_name: book.user_name.name,
-            date: book.date.date.format("%d.%m.%y").to_string(),
-        }
+            date: book.date.date,
+        })
     }
 }

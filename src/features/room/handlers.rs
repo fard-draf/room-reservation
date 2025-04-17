@@ -8,7 +8,6 @@ use crate::{
     error::{ErrDB, ErrService},
     features::room::{
         dto::{CreateRoomDto, RoomDto},
-        repo::RoomRepo,
         service::RoomService,
     },
 };
@@ -21,7 +20,7 @@ pub async fn create_room(
     State(state): State<AppState>,
     Json(payload): Json<CreateRoomDto>,
 ) -> Result<impl IntoResponse, ErrService> {
-    let mut service = state.room_service.lock().await;
+    let service = state.room_service.lock().await;
 
     let dto = service.add_room(&payload.room_name).await?;
     let room_dto = RoomDto {

@@ -7,7 +7,6 @@ use crate::{
 
 #[derive(Deserialize)]
 pub struct CreateRoomDto {
-    pub id: i32,
     pub room_name: String,
 }
 

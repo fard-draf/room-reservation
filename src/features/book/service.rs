@@ -1,7 +1,5 @@
-use chrono::NaiveDate;
-
 use crate::{
-    domain::{Book, BookDate, Room, RoomName, User, UserName},
+    domain::{Book, BookDate},
     error::{ErrBook, ErrDB, ErrDomain, ErrService},
 };
 
@@ -24,27 +22,19 @@ impl<T: BookRepo> BookService<T> {
         user: &str,
         desired_date: &str,
     ) -> Result<Book, ErrService> {
-        let date = BookDate::new(desired_date)
-            .map_err(|_| ErrDomain::BookCreation(ErrBook::InvalidDateFormat))?;
-        let book = Book {
-            id: 0,
-            room_name: RoomName {
-                name: room.to_string(),
-            },
-            user_name: UserName {
-                name: user.to_string(),
-            },
-            date: BookDate { date: date.date },
-        };
+        let date =
+            BookDate::new(desired_date).map_err(|_| ErrDomain::Book(ErrBook::InvalidDateFormat))?;
+
+        let book = Book::new(room, user, date)?;
 
         let all_book = self.repo.get_all_books().await?;
         let is_already_booked = all_book
             .iter()
-            .any(|x| (x.date.date == book.date.date) && (x.room_name.name == room));
+            .any(|x| (x.date.date == book.date.date) && (x.room_name.name == room.to_string()));
 
         if is_already_booked {
             println!("Already booked");
-            return Err(ErrService::BookCreation(ErrBook::AlreadyBooked));
+            return Err(ErrService::Book(ErrBook::AlreadyBooked));
         }
 
         self.repo.insert_book(&book).await?;
@@ -53,7 +43,7 @@ impl<T: BookRepo> BookService<T> {
         Ok(book)
     }
 
-    pub async fn list_book(&self) -> Result<Vec<Book>, ErrDB> {
+    pub async fn list_book(&self) -> Result<Vec<Book>, ErrService> {
         self.repo.get_all_books().await
     }
 
@@ -62,7 +52,7 @@ impl<T: BookRepo> BookService<T> {
         if deleted {
             Ok(())
         } else {
-            Err(ErrService::DbRequest(ErrDB::DoesntExist))
+            Err(ErrService::DBRequest(ErrDB::DoesntExist))
         }
     }
 }

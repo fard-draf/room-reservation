@@ -45,9 +45,9 @@ impl UserName {
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
         let cleaned_name = name.trim();
         if cleaned_name.len() <= 2 {
-            return Err(ErrDomain::UserCreation(ErrUser::InvalidNameTooShort));
+            return Err(ErrDomain::User(ErrUser::InvalidNameTooShort));
         } else if cleaned_name.len() >= 35 {
-            return Err(ErrDomain::UserCreation(ErrUser::InvalidNameTooLong));
+            return Err(ErrDomain::User(ErrUser::InvalidNameTooLong));
         } else {
             Ok(Self {
                 name: cleaned_name.to_string(),
@@ -90,9 +90,9 @@ impl RoomName {
     pub fn new(mut name: &str) -> Result<Self, ErrDomain> {
         name = name.trim();
         if name.len() <= 2 {
-            return Err(ErrDomain::RoomCreation(ErrRoom::InvalidNameTooShort));
+            return Err(ErrDomain::Room(ErrRoom::InvalidNameTooShort));
         } else if name.len() >= 17 {
-            return Err(ErrDomain::RoomCreation(ErrRoom::InvalidNameTooLong));
+            return Err(ErrDomain::Room(ErrRoom::InvalidNameTooLong));
         } else {
             Ok(Self {
                 name: name.to_string(),
@@ -121,7 +121,22 @@ pub struct Book {
     pub user_name: UserName,
     pub date: BookDate,
 }
-#[derive(Debug, PartialEq, Clone)]
+
+impl Book {
+    pub fn new(room_name: &str, user_name: &str, date: BookDate) -> Result<Self, ErrDomain> {
+        let id = 0;
+        let room_name = RoomName::new(room_name)?;
+        let user_name = UserName::new(user_name)?;
+
+        Ok(Self {
+            id,
+            room_name,
+            user_name,
+            date,
+        })
+    }
+}
+#[derive(Debug, PartialEq, Clone, sqlx::FromRow)]
 pub struct BookDate {
     pub date: NaiveDate,
 }
@@ -133,19 +148,23 @@ impl BookDate {
         let cleaned: String = input_date.trim().replace("/", ".");
 
         if cleaned.len() != 8 {
-            return Err(ErrDomain::BookCreation(ErrBook::InvalidDateFormat));
+            return Err(ErrDomain::Book(ErrBook::InvalidDateFormat));
         }
         let reservation_date: NaiveDate = match NaiveDate::parse_from_str(&cleaned, "%d.%m.%y") {
             Ok(date) => date,
-            Err(_e) => Err(ErrDomain::BookCreation(ErrBook::InvalidDateFormat))?,
+            Err(_e) => Err(ErrDomain::Book(ErrBook::InvalidDateFormat))?,
         };
 
-        if reservation_date < actual_date {
-            return Err(ErrDomain::BookCreation(ErrBook::InvalidDate));
-        }
+        // if reservation_date < actual_date {
+        //     return Err(ErrDomain::Book(ErrBook::InvalidDate));
+        // }
 
         Ok(Self {
             date: reservation_date,
         })
+    }
+
+    pub fn new_from_naive(input_date: NaiveDate) -> Result<Self, ErrDomain> {
+        Ok(Self { date: input_date })
     }
 }

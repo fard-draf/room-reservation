@@ -27,7 +27,7 @@ impl<T: UserRepo> UserService<T> {
         if deleted {
             Ok(())
         } else {
-            Err(ErrService::DbRequest(ErrDB::DoesntExist))
+            Err(ErrService::DBRequest(ErrDB::DoesntExist))
         }
     }
 

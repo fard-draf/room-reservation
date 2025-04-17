@@ -16,18 +16,18 @@ impl<T> RoomService<T> {
 }
 
 impl<T: RoomRepo> RoomService<T> {
-    pub async fn add_room(&mut self, room: &str) -> Result<Room, ErrService> {
+    pub async fn add_room(&self, room: &str) -> Result<Room, ErrService> {
         let room: Room = Room::new(room)?;
-        self.repo.insert_room(&room).await?;
+        let room = self.repo.insert_room(&room).await?;
         Ok(room)
     }
 
     pub async fn delete_room_by_id(&mut self, room: i32) -> Result<(), ErrService> {
-        let room_list = self.repo.get_all_rooms().await?;
-        if let Some(_id) = room_list.iter().find(|x| x.id == room) {
-            return Ok(self.repo.delete_room_by_id(room).await?);
+        let deleted = self.repo.delete_room_by_id(room).await?;
+        if deleted {
+            return Ok(());
         } else {
-            Err(ErrService::DbRequest(ErrDB::Unreachable))
+            Err(ErrService::DBRequest(ErrDB::Unreachable))
         }
     }
 

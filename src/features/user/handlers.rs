@@ -12,8 +12,6 @@ use crate::{
     },
 };
 
-use super::dto::DeleteUserByIdDto;
-
 pub type SharedUserService<T> = Arc<Mutex<UserService<T>>>;
 
 pub async fn create_user(
