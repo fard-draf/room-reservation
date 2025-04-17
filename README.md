@@ -31,7 +31,10 @@ The main goal of this project is to learn and practice backend development conce
   
 ## Technologies Used
 **Rust** : Programming language for system-level performance and safety
+
 **Axum** : Web framework for building HTTP servers
+
 **SQLx**: Asynchronous SQL toolkit for Rust
+
 **PostgreSQL**: Relational database for storing data​
 
