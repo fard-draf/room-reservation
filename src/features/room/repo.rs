@@ -17,14 +17,16 @@ pub trait RoomRepo {
 #[async_trait]
 impl RoomRepo for DBClient {
     async fn insert_room(&self, room: &Room) -> Result<Room, ErrService> {
-        let mut existing_room = vec![];
-        for element in self.get_all_rooms().await? {
-            existing_room.push(element.room_name);
-        }
-        if existing_room.contains(&room.room_name) {
+        if self
+            .get_all_rooms()
+            .await?
+            .iter()
+            .any(|r| r.room_name == room.room_name)
+        {
             return Err(ErrService::Room(ErrRoom::AlreadyExist));
         }
-        let row = sqlx::query_as::<_, RoomRowDto>(
+
+        let row: RoomRowDto = sqlx::query_as::<_, RoomRowDto>(
             "INSERT INTO rooms (room_name) VALUES ($1) RETURNING id, room_name",
         )
         .bind(room.room_name.name.clone())
@@ -43,11 +45,7 @@ impl RoomRepo for DBClient {
             .await
             .map_err(|_e| ErrRepo::DoesntExist)?;
 
-        if result.rows_affected() == 0 {
-            Ok(false)
-        } else {
-            Ok(true)
-        }
+        Ok(!result.rows_affected() == 0)
     }
 
     async fn get_all_rooms(&self) -> Result<Vec<Room>, ErrService> {

@@ -1,19 +1,22 @@
 #[cfg(test)]
 mod test {
     use crate::{
-        domain::BookDate,
+        domain::{Book, BookDate},
         error::{ErrBook, ErrService},
-        tests::test_helpers::{default_rooms, default_users, init_reg_service},
+        features::book::service::BookService,
+        infra::in_memory::in_memo_repo::InMemoryRepo,
+        tests::test_helpers::{default_rooms, default_users, init_inmemory_repo},
     };
 
     #[tokio::test]
 
     async fn add_and_list_book() -> Result<(), ErrService> {
-        let mut reg_service = init_reg_service().await?;
+        let mut book_service: BookService<InMemoryRepo<Book>> =
+            BookService::new(InMemoryRepo::new().await);
         let (room1, _room2) = default_rooms().await?;
         let (user1, _user2) = default_users().await?;
 
-        let add_book_ok = reg_service.book_room(&room1, &user1, "01.02.52");
+        let add_book_ok = book_service
         assert!(add_book_ok.await.is_ok(), "Add book should be ok");
 
         Ok(())

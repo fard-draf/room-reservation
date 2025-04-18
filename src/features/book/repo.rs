@@ -19,7 +19,7 @@ pub trait BookRepo {
 #[async_trait]
 impl BookRepo for DBClient {
     async fn insert_book(&self, book: &Book) -> Result<Book, ErrService> {
-        let mut existing_rooms: Vec<RoomName> = vec![];
+        let mut existing_rooms: Vec<RoomName> = Vec::new();
         for element in self.get_all_rooms().await? {
             existing_rooms.push(element.room_name);
         }

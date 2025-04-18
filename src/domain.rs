@@ -152,7 +152,7 @@ impl BookDate {
         })
     }
 
-    pub fn new_from_naive(input_date: NaiveDate) -> Result<Self, ErrDomain> {
+    pub fn from_naive(input_date: NaiveDate) -> Result<Self, ErrDomain> {
         Ok(Self { date: input_date })
     }
 }

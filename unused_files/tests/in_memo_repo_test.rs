@@ -4,11 +4,12 @@ mod test {
     use crate::{
         domain::User,
         error::ErrService,
-        infra::in_memo_repo::InMemoryRepo,
+        infra::in_memory::in_memo_repo::InMemoryRepo,
         tests::test_helpers::{default_users, init_inmemory_repo},
     };
 
     async fn initialize_repo<T>() -> Result<(InMemoryRepo<T>, User, User), ErrService> {
+        let repo = InMemoryRepo::<User>::new().await;
         let repo = init_inmemory_repo().await?;
         let (user1, user2) = default_users().await?;
         Ok((repo, user1, user2))

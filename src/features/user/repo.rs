@@ -17,6 +17,13 @@ pub trait UserRepo {
 #[async_trait]
 impl UserRepo for DBClient {
     async fn insert_user(&self, user: &User) -> Result<User, ErrService> {
+        let mut existing_users: Vec<UserName> = Vec::new();
+        for element in self.get_all_users().await? {
+            existing_users.push(element.user_name);
+        }
+        if existing_users.contains(&user.user_name) {
+            return Err(ErrService::User(ErrUser::AlreadyExist));
+        }
         let row = sqlx::query_as::<_, UserRowDto>(
             "INSERT INTO users (user_name) VALUES ($1) RETURNING id, user_name",
         )
@@ -25,32 +32,29 @@ impl UserRepo for DBClient {
         .await
         .map_err(|_e| ErrRepo::Unreachable)?;
 
-        let mut existing_users = vec![];
-        for element in self.get_all_users().await? {
-            existing_users.push(element.user_name);
-        }
-        if existing_users.contains(&user.user_name) {
-            return Err(ErrService::User(ErrUser::AlreadyExist));
-        }
         let user: User = row.try_into()?;
         Ok(user)
     }
 
     async fn update_user(&self, old_name: &str, new_name: &str) -> Result<User, ErrService> {
         let old_name = UserName::new(old_name)?;
-        let name_exists = self
-            .get_all_users()
-            .await?
-            .into_iter()
-            .any(|x| x.user_name == old_name);
-        if !name_exists {
-            return Err(ErrService::User(ErrUser::UserNotFound));
+        let new_name = UserName::new(new_name)?;
+
+        let users = self.get_all_users().await?;
+
+        users
+            .iter()
+            .find(|u| u.user_name == old_name)
+            .ok_or(ErrService::User(ErrUser::UserNotFound))?;
+
+        if users.iter().any(|u| u.user_name == new_name) {
+            return Err(ErrService::User(ErrUser::AlreadyExist));
         }
 
         let row = sqlx::query_as::<_, UserRowDto>(
             "UPDATE users SET user_name = $1 WHERE user_name = $2 RETURNING id, user_name",
         )
-        .bind(new_name)
+        .bind(new_name.name)
         .bind(old_name.name)
         .fetch_one(&self.pool)
         .await
@@ -67,18 +71,14 @@ impl UserRepo for DBClient {
             .await
             .map_err(|_e| ErrRepo::DoesntExist)?;
 
-        if result.rows_affected() == 0 {
-            Ok(false)
-        } else {
-            Ok(true)
-        }
+        Ok(!result.rows_affected() == 0)
     }
 
     async fn get_all_users(&self) -> Result<Vec<User>, ErrService> {
         let rows = sqlx::query_as::<_, UserRowDto>("SELECT id, user_name FROM users ")
             .fetch_all(&self.pool)
             .await
-            .map_err(|_e| ErrRepo::Unreachable)?;
+            .map_err(|_e| ErrRepo::BadRequest)?;
 
         let users = rows
             .into_iter()

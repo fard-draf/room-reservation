@@ -1,12 +1,12 @@
 #[cfg(test)]
 
 mod test {
-    use crate::{error::ErrService, tests::test_helpers::init_room_service};
+    use crate::{app::state::AppState, error::ErrService, tests::test_helpers::init_room_service};
 
     #[tokio::test]
 
     async fn add_and_list_room() -> Result<(), ErrService> {
-        let mut room_service = init_room_service().await?;
+        let service = 
 
         assert!(room_service.("El Palaccio").await.is_ok());
 
