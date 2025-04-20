@@ -5,6 +5,7 @@ use crate::{
 
 use super::repo::UserRepo;
 
+#[derive(Debug)]
 pub struct UserService<T> {
     repo: T,
 }
@@ -17,7 +18,7 @@ impl<T> UserService<T> {
 
 impl<T: UserRepo> UserService<T> {
     pub async fn add_user(&self, name: &str) -> Result<User, ErrService> {
-        let user = User::new(name)?;
+        let user = User::new(&name.trim().to_lowercase())?;
         let user = self.repo.insert_user(&user).await?;
 
         Ok(user)
@@ -42,12 +43,12 @@ impl<T: UserRepo> UserService<T> {
         self.repo.get_all_users().await
     }
 
-    pub async fn is_exist_user(&self, user: &str) -> Result<bool, ErrService> {
+    pub async fn is_exist_user(&self, user: &str) -> Result<(), ErrService> {
         let user_list = self.repo.get_all_users().await?;
         if user_list.iter().any(|x| x.user_name.name == user) {
-            Ok(true)
+            Ok(())
         } else {
-            Ok(false)
+            Err(ErrService::User(crate::error::ErrUser::UserNotFound))
         }
     }
 }

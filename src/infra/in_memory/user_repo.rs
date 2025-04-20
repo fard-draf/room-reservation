@@ -4,7 +4,7 @@ mod test {
 
     use super::*;
     use crate::{
-        domain::{User, UserName},
+        domain::User,
         error::{ErrService, ErrUser},
         features::user::{repo::UserRepo, service::UserService},
         infra::in_memory::in_memo_repo::InMemoryRepo,
@@ -14,11 +14,12 @@ mod test {
     #[async_trait]
     impl UserRepo for InMemoryRepo<User> {
         async fn insert_user(&self, user: &User) -> Result<User, ErrService> {
-            let insert_user = self.repo.lock().unwrap().insert(user.id, user.clone());
-            match insert_user {
-                Some(user) => Ok(user),
-                None => Err(ErrService::User(ErrUser::InvalidID)),
+            let vec = self.get_all_users().await?;
+            if vec.iter().any(|x| x.user_name == user.user_name) {
+                return Err(ErrService::User(ErrUser::AlreadyExist));
             }
+            self.repo.lock().unwrap().insert(user.id, user.clone());
+            Ok(user.clone())
         }
         async fn delete_user_by_name(&self, user: &str) -> Result<bool, ErrService> {
             let user = User::new(user)?;
@@ -38,11 +39,59 @@ mod test {
             }
         }
         async fn get_all_users(&self) -> Result<Vec<User>, ErrService> {
-            let mut vec = Vec::<User>::new();
-            for (k, v) in self.repo.lock().unwrap().iter() {
-                vec.push(v.clone());
-            }
+            let vec = self.repo.lock().unwrap().values().cloned().collect();
             Ok(vec)
         }
+    }
+
+    #[tokio::test]
+    async fn print_all_users() {
+        let repo = InMemoryRepo::new().await;
+        let service = UserService::new(repo);
+
+        let user_ok1 = service.add_user("Sophie").await;
+        let user_ok2 = service.add_user("Jordan").await;
+
+        println!("{:?}", service)
+    }
+
+    #[tokio::test]
+    async fn add_and_list_user() {
+        let repo = InMemoryRepo::new().await;
+        let service = UserService::new(repo);
+
+        let user_ok1 = service.add_user("Sophie").await;
+        let user_ok2 = service.add_user("Jordan").await;
+
+        let user_err1 = service.add_user(" SOPHIE ").await; //already exist
+        let user_err2 = service.add_user("SoPhiE").await; //already exist
+        let user_err3 = service.add_user("A").await; //too short
+        let user_err4 = service //too long
+            .add_user("ABCDEFG       HIJKLMNO    PQRSTUVWXYZ")
+            .await;
+
+        assert!(user_ok1.is_ok());
+        assert!(user_ok2.is_ok());
+
+        assert!(user_err1.is_err());
+        assert!(user_err2.is_err());
+        assert!(user_err3.is_err());
+        assert!(user_err4.is_err());
+
+        assert!(service.is_exist_user("Jordan").await.is_ok());
+        // assert!(!service.is_exist_user("     JORDAN   ").await.is_ok());
+
+        // assert!(service.is_exist_user("Daniel").await.is_ok());
+    }
+
+    #[tokio::test]
+    async fn delete_user_by_name() {
+        let repo = InMemoryRepo::new().await;
+        let mut service = UserService::new(repo);
+
+        let user_ok1 = service.add_user("Sophie").await;
+        let user_ok2 = service.add_user("Jordan").await;
+
+        assert!(service.delete_user("Sophie").await.is_ok())
     }
 }

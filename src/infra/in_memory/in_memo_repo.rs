@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Mutex};
 
+#[derive(Debug)]
 pub struct InMemoryRepo<T> {
     pub repo: Mutex<HashMap<i32, T>>,
 }
