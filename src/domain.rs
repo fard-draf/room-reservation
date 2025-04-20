@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use uuid::Uuid;
 
 use crate::error::{ErrBook, ErrDomain, ErrRoom, ErrUser};
 
@@ -6,35 +7,41 @@ use crate::error::{ErrBook, ErrDomain, ErrRoom, ErrUser};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct User {
-    pub id: i32,
+    pub user_id: UserID,
     pub user_name: UserName,
 }
 
 impl User {
-    // pub fn new(name: &str) -> Result<Self, ErrDomain> {
-    //     Ok(Self {
-    //         id: UserID::new(),
-    //         name: UserName::new(name)?,
-    //     })
-    // }
-
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
         Ok(Self {
-            id: 0,
+            user_id: UserID::new(),
             user_name: UserName::new(name)?,
         })
     }
+
+    // pub fn new(name: &str) -> Result<Self, ErrDomain> {
+    //     Ok(Self {
+    //         id: 0,
+    //         user_name: UserName::new(name)?,
+    //     })
+    // }
 }
 
-// #[derive(Debug, PartialEq, Clone)]
-// struct UserID {
-//     id: Uuid,
-// }
-// impl UserID {
-//     fn new() -> Self {
-//         Self { id: Uuid::new_v4() }
-//     }
-// }
+#[derive(Debug, PartialEq, Clone)]
+pub struct UserID {
+    pub id: Uuid,
+}
+impl UserID {
+    pub fn new() -> Self {
+        Self { id: Uuid::new_v4() }
+    }
+}
+
+impl Default for UserID {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UserName {

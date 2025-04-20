@@ -25,7 +25,7 @@ pub async fn create_user(
     let dto = service.add_user(&payload.user_name).await?;
 
     let user_dto = UserDto {
-        id: dto.id,
+        user_id: dto.user_id.id,
         user_name: dto.user_name.name,
     };
 
@@ -43,7 +43,7 @@ pub async fn update_user(
         .await?;
 
     let user_dto = UpdateUserDto {
-        id: dto.id,
+        user_id: dto.user_id.id,
         new_name: dto.user_name.name,
     };
 
@@ -57,7 +57,7 @@ pub async fn list_users(State(state): State<AppState>) -> Result<impl IntoRespon
     let dto: Vec<UserDto> = users
         .into_iter()
         .map(|u| UserDto {
-            id: u.id,
+            user_id: u.user_id.id,
             user_name: u.user_name.name,
         })
         .collect();

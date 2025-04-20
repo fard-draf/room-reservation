@@ -5,6 +5,7 @@ use crate::{
     infra::db::DBClient,
 };
 use async_trait::async_trait;
+use uuid::Uuid;
 
 #[async_trait]
 pub trait UserRepo: Send + Sync {
@@ -12,6 +13,7 @@ pub trait UserRepo: Send + Sync {
     async fn update_user(&self, old_name: &str, new_name: &str) -> Result<User, ErrService>;
     async fn delete_user_by_name(&self, name: &str) -> Result<bool, ErrService>;
     async fn get_all_users(&self) -> Result<Vec<User>, ErrService>;
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, ErrService>;
 }
 
 #[async_trait]
@@ -25,8 +27,9 @@ impl UserRepo for DBClient {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
         let row = sqlx::query_as::<_, UserRowDto>(
-            "INSERT INTO users (user_name) VALUES ($1) RETURNING id, user_name",
+            "INSERT INTO users (user_id, user_name) VALUES ($1, $2) RETURNING user_id, user_name",
         )
+        .bind(user.user_id.id)
         .bind(&user.user_name.name)
         .fetch_one(&self.pool)
         .await
@@ -42,9 +45,10 @@ impl UserRepo for DBClient {
 
         let users = self.get_all_users().await?;
 
-        users
+        let existing_user = users
             .iter()
             .find(|u| u.user_name == old_name)
+            .cloned()
             .ok_or(ErrService::User(ErrUser::UserNotFound))?;
 
         if users.iter().any(|u| u.user_name == new_name) {
@@ -52,7 +56,7 @@ impl UserRepo for DBClient {
         }
 
         let row = sqlx::query_as::<_, UserRowDto>(
-            "UPDATE users SET user_name = $1 WHERE user_name = $2 RETURNING id, user_name",
+            "UPDATE users SET user_name = $1 WHERE user_name = $2 RETURNING user_id, user_name",
         )
         .bind(new_name.name)
         .bind(old_name.name)
@@ -60,7 +64,11 @@ impl UserRepo for DBClient {
         .await
         .map_err(|_e| ErrRepo::BadRequest)?;
 
-        let user: User = row.try_into()?;
+        // let user: User = row.try_into()?;
+        let user: User = User {
+            user_id: existing_user.user_id,
+            user_name: UserName::new(&row.user_name)?,
+        };
         Ok(user)
     }
 
@@ -71,11 +79,11 @@ impl UserRepo for DBClient {
             .await
             .map_err(|_e| ErrRepo::DoesntExist)?;
 
-        Ok(!result.rows_affected() == 0)
+        Ok(result.rows_affected() > 0)
     }
 
     async fn get_all_users(&self) -> Result<Vec<User>, ErrService> {
-        let rows = sqlx::query_as::<_, UserRowDto>("SELECT id, user_name FROM users ")
+        let rows = sqlx::query_as::<_, UserRowDto>("SELECT user_id, user_name FROM users ")
             .fetch_all(&self.pool)
             .await
             .map_err(|_e| ErrRepo::BadRequest)?;
@@ -86,5 +94,21 @@ impl UserRepo for DBClient {
             .collect::<Result<_, _>>()?;
 
         Ok(users)
+    }
+
+    async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, ErrService> {
+        let row = sqlx::query_as!(
+            UserRowDto,
+            "SELECT user_id, user_name FROM users WHERE user_id = $1",
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|_e| ErrRepo::DoesntExist)?;
+
+        match row {
+            Some(dto) => Ok(Some(User::try_from(dto)?)),
+            None => Ok(None),
+        }
     }
 }

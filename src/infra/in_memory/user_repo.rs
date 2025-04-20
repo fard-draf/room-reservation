@@ -4,12 +4,13 @@ mod test {
 
     use super::*;
     use crate::{
-        domain::User,
+        domain::{User, UserID},
         error::{ErrService, ErrUser},
         features::user::{repo::UserRepo, service::UserService},
         infra::in_memory::in_memo_repo::InMemoryRepo,
     };
     use async_trait::async_trait;
+    use uuid::Uuid;
 
     #[async_trait]
     impl UserRepo for InMemoryRepo<User> {
@@ -18,19 +19,22 @@ mod test {
             if vec.iter().any(|x| x.user_name == user.user_name) {
                 return Err(ErrService::User(ErrUser::AlreadyExist));
             }
-            self.repo.lock().unwrap().insert(user.id, user.clone());
+            self.repo
+                .lock()
+                .unwrap()
+                .insert(user.user_id.id, user.clone());
             Ok(user.clone())
         }
         async fn delete_user_by_name(&self, user: &str) -> Result<bool, ErrService> {
             let user = User::new(user)?;
-            self.repo.lock().unwrap().remove(&user.id);
+            self.repo.lock().unwrap().remove(&user.user_id.id);
             Ok(true)
         }
         async fn update_user(&self, old_name: &str, new_name: &str) -> Result<User, ErrService> {
             let old_name = User::new(old_name)?;
             let new_name = User::new(new_name)?;
             let mut repo = self.repo.lock().unwrap();
-            match repo.get_mut(&old_name.id) {
+            match repo.get_mut(&old_name.user_id.id) {
                 Some(user) => {
                     user.user_name = new_name.user_name.clone();
                     Ok(new_name)
@@ -42,6 +46,11 @@ mod test {
             let vec = self.repo.lock().unwrap().values().cloned().collect();
             Ok(vec)
         }
+
+        async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, ErrService> {
+            let repo = self.repo.lock().unwrap();
+            Ok(repo.get(&id).cloned())
+        }
     }
 
     #[tokio::test]
@@ -52,7 +61,7 @@ mod test {
         let user_ok1 = service.add_user("Sophie").await;
         let user_ok2 = service.add_user("Jordan").await;
 
-        println!("{:?}", service)
+        println!("{:#?}", service)
     }
 
     #[tokio::test]
