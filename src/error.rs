@@ -21,6 +21,7 @@ pub enum ErrRoom {
     InvalidNameTooLong,
     InvalidID,
     AlreadyExist,
+    RoomNotFound,
 }
 
 #[derive(Debug)]
@@ -145,6 +146,7 @@ impl IntoResponse for ErrService {
             ErrService::Room(ErrRoom::InvalidNameTooLong) => bad_request("Room's name is too long"),
             ErrService::Room(ErrRoom::InvalidID) => bad_request("Invalid room's ID"),
             ErrService::Room(ErrRoom::AlreadyExist) => bad_request("Room already exists"),
+            ErrService::Room(ErrRoom::RoomNotFound) => bad_request("Room not found in the system"),
             ///// TYPE ERROR
             ErrService::Type(ErrType::RawConversionFailed) => {
                 internal_error("Raw conversion failed")

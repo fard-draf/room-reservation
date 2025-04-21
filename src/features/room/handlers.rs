@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-use super::dto::DeleteRoomByIdDto;
+use super::dto::{DeleteRoomByIdDto, UpdateRoomDto};
 
 pub type SharedRoomService<T> = Arc<Mutex<RoomService<T>>>;
 
@@ -23,6 +23,24 @@ pub async fn create_room(
     let service = state.room_service.lock().await;
 
     let dto = service.add_room(&payload.room_name).await?;
+    let room_dto = RoomDto {
+        id: dto.id,
+        room_name: dto.room_name.name,
+    };
+
+    Ok(Json(room_dto))
+}
+
+pub async fn update_room_name(
+    State(state): State<AppState>,
+    Json(payload): Json<UpdateRoomDto>,
+) -> Result<impl IntoResponse, ErrService> {
+    let service = state.room_service.lock().await;
+
+    let dto = service
+        .update_room(&payload.old_name, &payload.new_name)
+        .await?;
+
     let room_dto = RoomDto {
         id: dto.id,
         room_name: dto.room_name.name,

@@ -15,6 +15,12 @@ pub struct DeleteRoomByIdDto {
     pub id: i32,
 }
 
+#[derive(Deserialize)]
+pub struct UpdateRoomDto {
+    pub old_name: String,
+    pub new_name: String,
+}
+
 #[derive(Serialize)]
 pub struct RoomDto {
     pub id: i32,
