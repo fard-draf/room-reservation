@@ -2,6 +2,7 @@ use axum::Router;
 use sqlx::postgres::PgPoolOptions;
 use std::{error::Error, sync::Arc};
 use tokio::sync::Mutex;
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     app::state::AppState,
@@ -27,11 +28,17 @@ pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
         book_service: Arc::new(Mutex::new(BookService::new(db_client.clone()))),
     };
 
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
     let app = Router::new()
         .merge(book_routes())
         .merge(room_routes())
         .merge(user_routes())
-        .with_state(state);
+        .with_state(state)
+        .layer(cors);
 
     Ok(app)
 }
