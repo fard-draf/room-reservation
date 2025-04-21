@@ -42,7 +42,7 @@ pub struct UserName {
 }
 impl UserName {
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
-        let cleaned_name = name.trim();
+        let cleaned_name = name.trim().to_lowercase();
         if cleaned_name.len() <= 2 {
             Err(ErrDomain::User(ErrUser::InvalidNameTooShort))
         } else if cleaned_name.len() >= 35 {

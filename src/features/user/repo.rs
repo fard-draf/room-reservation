@@ -11,7 +11,7 @@ use uuid::Uuid;
 pub trait UserRepo: Send + Sync {
     async fn insert_user(&self, user: &User) -> Result<User, ErrService>;
     async fn update_user(&self, id: Uuid, new_name: UserName) -> Result<User, ErrService>;
-    async fn delete_user_by_name(&self, name: &str) -> Result<bool, ErrService>;
+    async fn delete_user_by_name(&self, name: UserName) -> Result<bool, ErrService>;
     async fn get_all_users(&self) -> Result<Vec<User>, ErrService>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, ErrService>;
 }
@@ -49,9 +49,9 @@ impl UserRepo for DBClient {
         Ok(user)
     }
 
-    async fn delete_user_by_name(&self, name: &str) -> Result<bool, ErrService> {
+    async fn delete_user_by_name(&self, name: UserName) -> Result<bool, ErrService> {
         let row = sqlx::query("DELETE FROM users WHERE user_name = $1")
-            .bind(name)
+            .bind(name.name)
             .execute(&self.pool)
             .await
             .map_err(|_e| ErrRepo::DoesntExist)?;

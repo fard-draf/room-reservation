@@ -53,8 +53,10 @@ impl<T: UserRepo> UserService<T> {
         Ok(user)
     }
 
-    pub async fn delete_user(&mut self, name: &str) -> Result<(), ErrService> {
-        let deleted = self.repo.delete_user_by_name(name).await?;
+    pub async fn delete_user(&mut self, user_name: &str) -> Result<(), ErrService> {
+        let user_name = UserName::new(user_name)?;
+
+        let deleted = self.repo.delete_user_by_name(user_name).await?;
         if deleted {
             Ok(())
         } else {
@@ -66,15 +68,10 @@ impl<T: UserRepo> UserService<T> {
         self.repo.get_all_users().await
     }
 
-    pub async fn is_exist_user(&self, user: &str) -> Result<(), ErrService> {
+    pub async fn is_exist_user(&self, user: &str) -> Result<bool, ErrService> {
+        let user = UserName::new(user)?;
         let user_list = self.repo.get_all_users().await?;
-        if user_list
-            .iter()
-            .any(|x| x.user_name.name == user.trim().to_lowercase())
-        {
-            Ok(())
-        } else {
-            Err(ErrService::User(crate::error::ErrUser::UserNotFound))
-        }
+
+        Ok(user_list.iter().any(|x| x.user_name == user))
     }
 }
