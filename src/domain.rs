@@ -18,13 +18,6 @@ impl User {
             user_name: UserName::new(name)?,
         })
     }
-
-    // pub fn new(name: &str) -> Result<Self, ErrDomain> {
-    //     Ok(Self {
-    //         id: 0,
-    //         user_name: UserName::new(name)?,
-    //     })
-    // }
 }
 
 #[derive(Debug, PartialEq, Clone)]
