@@ -44,17 +44,6 @@ pub struct UserRowDto {
     pub user_name: String,
 }
 
-// impl TryFrom<UpdateUserNameDto> for User {
-//     type Error = ErrDomain;
-
-//     fn try_from(dto: UpdateUserNameDto) -> Result<Self, Self::Error> {
-//         Ok(User {
-//             user_id: UserID::new(),
-//             user_name: UserName::new(&dto.new_name)?,
-//         })
-//     }
-// }
-
 impl TryFrom<CreateUserDto> for User {
     type Error = ErrDomain;
 

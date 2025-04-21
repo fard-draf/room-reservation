@@ -1,6 +1,6 @@
 use crate::{
     domain::{User, UserID, UserName},
-    error::{ErrRepo, ErrService, ErrUser},
+    error::{ErrRepo, ErrService},
     features::user::dto::UserRowDto,
     infra::db::DBClient,
 };
