@@ -14,13 +14,13 @@ The main goal of this project is to learn and practice backend development conce
 #### Rooms Management:
 - Create new rooms
 - Retrieve a list of rooms
-- Update room details  *(work in progress)* 
+- Update room details  
 - Delete rooms​
 
 #### Users Management:
 - Create new users
 - Retrieve a list of users
-- Update users details  *(work in progress)* 
+- Update users details  
 - Delete users
 
 #### Reservations Management:
