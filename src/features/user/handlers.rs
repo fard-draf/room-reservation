@@ -39,7 +39,7 @@ pub async fn update_user(
     let service = state.user_service.lock().await;
 
     let dto = service
-        .update_user(&payload.new_name, &payload.old_name)
+        .update_user(&payload.old_name, &payload.new_name)
         .await?;
 
     let user_dto = UpdateUserDto {
