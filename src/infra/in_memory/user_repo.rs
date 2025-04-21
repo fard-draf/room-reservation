@@ -1,5 +1,4 @@
 #[cfg(test)]
-
 mod test {
 
     use crate::{
@@ -9,7 +8,6 @@ mod test {
         infra::in_memory::in_memo_repo::InMemoryRepo,
     };
     use async_trait::async_trait;
-    use serde::ser;
     use uuid::Uuid;
 
     #[async_trait]
@@ -66,8 +64,6 @@ mod test {
 
         assert!(service.add_user("Sophie").await.is_ok());
         assert!(service.add_user("Jordan").await.is_ok());
-
-        println!("{:#?}", service)
     }
 
     #[tokio::test]
