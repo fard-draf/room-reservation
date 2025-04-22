@@ -36,7 +36,7 @@ impl Default for UserID {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, sqlx::FromRow)]
 pub struct UserName {
     pub name: String,
 }
@@ -80,7 +80,7 @@ impl Room {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, sqlx::FromRow)]
 pub struct RoomName {
     pub name: String,
 }
@@ -94,7 +94,7 @@ impl RoomName {
             return Err(ErrDomain::Room(ErrRoom::InvalidNameTooLong));
         } else {
             Ok(Self {
-                name: name.to_string(),
+                name: name.to_string().to_uppercase(),
             })
         }
     }

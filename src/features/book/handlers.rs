@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-use super::dto::DeleteBookByIdDto;
+use super::dto::{DeleteBookByIdDto, UpdateBookDto};
 
 pub type SharedBookService<T> = Arc<Mutex<BookService<T>>>;
 
@@ -23,6 +23,31 @@ pub async fn create_booking(
 
     let dto = service
         .book_room(&payload.room_name, &payload.user_name, &payload.date)
+        .await?;
+
+    let book_dto = BookDto {
+        id: dto.id,
+        room_name: dto.room_name.name,
+        user_name: dto.user_name.name,
+        date: dto.date.date,
+    };
+
+    Ok(Json(book_dto))
+}
+
+pub async fn update_book(
+    State(state): State<AppState>,
+    Json(payload): Json<UpdateBookDto>,
+) -> Result<impl IntoResponse, ErrService> {
+    let service = state.book_service.lock().await;
+
+    let dto = service
+        .update_book_by_id(
+            payload.old_id,
+            &payload.room_name,
+            &payload.user_name,
+            &payload.date,
+        )
         .await?;
 
     let book_dto = BookDto {

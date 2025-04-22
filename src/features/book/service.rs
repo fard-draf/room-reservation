@@ -1,9 +1,12 @@
 use crate::{
-    domain::{Book, BookDate},
+    domain::{Book, BookDate, RoomName, UserName},
     error::{ErrBook, ErrDomain, ErrRepo, ErrService},
+    features::{book::dto::BookRowDto, room::repo::RoomRepo, user::repo::UserRepo},
 };
 
 use super::repo::BookRepo;
+
+use chrono::Local;
 
 pub struct BookService<T> {
     repo: T,
@@ -15,7 +18,10 @@ impl<T> BookService<T> {
     }
 }
 
-impl<T: BookRepo> BookService<T> {
+impl<T> BookService<T>
+where
+    T: RoomRepo + UserRepo + BookRepo,
+{
     pub async fn book_room(
         &self,
         room: &str,
@@ -37,9 +43,52 @@ impl<T: BookRepo> BookService<T> {
             return Err(ErrService::Book(ErrBook::AlreadyBooked));
         }
 
+        let mut existing_rooms: Vec<RoomName> = Vec::new();
+        for element in self.repo.get_all_rooms().await? {
+            existing_rooms.push(element.room_name);
+        }
+
+        let mut existing_users: Vec<UserName> = vec![];
+        for element in self.repo.get_all_users().await? {
+            existing_users.push(element.user_name);
+        }
+
+        if book.date.date < Local::now().date_naive() {
+            return Err(ErrService::Book(ErrBook::InvalidDate));
+        }
+        if !existing_rooms.contains(&book.room_name) {
+            return Err(ErrService::Book(ErrBook::RoomNotFound));
+        }
+        if !existing_users.contains(&book.user_name) {
+            return Err(ErrService::Book(ErrBook::UserNotFound));
+        }
+
         let book = self.repo.insert_book(&book).await?;
         println!("{:?} reserved on {:?}, id: {}", room, desired_date, book.id);
 
+        Ok(book)
+    }
+
+    pub async fn update_book_by_id(
+        &self,
+        old_book_id: i32,
+        room: &str,
+        user: &str,
+        date: &str,
+    ) -> Result<Book, ErrService> {
+        let room = RoomName::new(room)?;
+        let user = UserName::new(user)?;
+        let date = BookDate::new(date)?;
+        let book = Book::new(&room.name, &user.name, date)?;
+        let mut id_book = Vec::new();
+        for element in self.repo.get_all_books().await? {
+            id_book.push(element.id)
+        }
+        if !id_book.contains(&old_book_id) {
+            return Err(ErrService::Book(ErrBook::UnableToRead));
+        }
+
+        let book = self.repo.update_book(&book).await?;
         Ok(book)
     }
 

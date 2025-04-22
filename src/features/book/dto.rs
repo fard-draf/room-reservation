@@ -14,6 +14,14 @@ pub struct CreateBookDto {
 }
 
 #[derive(Deserialize)]
+pub struct UpdateBookDto {
+    pub old_id: i32,
+    pub room_name: String,
+    pub user_name: String,
+    pub date: String,
+}
+
+#[derive(Deserialize)]
 pub struct DeleteBookByIdDto {
     pub id: i32,
 }

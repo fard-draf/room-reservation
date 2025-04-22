@@ -8,9 +8,12 @@ use crate::{
 use async_trait::async_trait;
 use chrono::Local;
 
+use super::dto::UpdateBookDto;
+
 #[async_trait]
 pub trait BookRepo {
     async fn insert_book(&self, book: &Book) -> Result<Book, ErrService>;
+    async fn update_book(&self, book: &Book) -> Result<Book, ErrService>;
     async fn get_all_books(&self) -> Result<Vec<Book>, ErrService>;
     async fn delete_book_by_id(&self, id: i32) -> Result<bool, ErrService>;
     async fn delete_all_book(&self) -> Result<bool, ErrService>;
@@ -56,6 +59,22 @@ impl BookRepo for DBClient {
             Err(_) => return Err(ErrService::Type(ErrType::RawConversionFailed)),
         };
 
+        Ok(book)
+    }
+
+    async fn update_book(&self, book: &Book) -> Result<Book, ErrService> {
+        let row = sqlx::query_as::<_, BookRowDto>(
+            "INSERT INTO books (id, room_name, user_name, date) VALUES ($1, $2, $3, $4) RETURNING id, room_name, user_name, date",
+            )
+            .bind(book.id)
+            .bind(&book.room_name.name)
+            .bind(&book.user_name.name)
+            .bind(book.date.date)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|_e| ErrRepo::BadRequest)?;
+
+        let book: Book = row.try_into()?;
         Ok(book)
     }
 
