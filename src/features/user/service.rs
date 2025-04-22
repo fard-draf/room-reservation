@@ -1,5 +1,7 @@
+use std::collections::HashSet;
+
 use crate::{
-    domain::{User, UserName},
+    domain::{User, UserID, UserName},
     error::{ErrRepo, ErrService, ErrUser},
 };
 
@@ -19,10 +21,14 @@ impl<T> UserService<T> {
 impl<T: UserRepo> UserService<T> {
     pub async fn add_user(&self, name: &str) -> Result<User, ErrService> {
         let user = User::new(&name.trim().to_lowercase())?;
-        let mut existing_users: Vec<UserName> = Vec::new();
-        for element in self.repo.get_all_users().await? {
-            existing_users.push(element.user_name);
-        }
+        let existing_users: HashSet<UserName> = self
+            .repo
+            .get_all_users()
+            .await?
+            .into_iter()
+            .map(|u| u.user_name)
+            .collect();
+
         if existing_users.contains(&user.user_name) {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
@@ -34,22 +40,33 @@ impl<T: UserRepo> UserService<T> {
         let old_name = UserName::new(&old_name.trim().to_lowercase())?;
         let new_name = UserName::new(&new_name.trim().to_lowercase())?;
 
-        let users = self.repo.get_all_users().await?;
+        // let users = self.repo.get_all_users().await?;
 
-        let existing_user = users
+        // let existing_user = users
+        //     .iter()
+        //     .find(|u| u.user_name == old_name)
+        //     .cloned()
+        //     .ok_or(ErrService::User(ErrUser::UserNotFound))?;
+
+        let existing_users: HashSet<(UserName, UserID)> = self
+            .repo
+            .get_all_users()
+            .await?
+            .into_iter()
+            .map(|u| (u.user_name, u.user_id))
+            .collect();
+
+        let existing_user = existing_users
             .iter()
-            .find(|u| u.user_name == old_name)
+            .find(|u| u.0 == old_name)
             .cloned()
             .ok_or(ErrService::User(ErrUser::UserNotFound))?;
 
-        if users.iter().any(|u| u.user_name == new_name) {
+        if existing_users.iter().any(|u| u.0 == new_name) {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
 
-        let user = self
-            .repo
-            .update_user(existing_user.user_id.id, new_name)
-            .await?;
+        let user = self.repo.update_user(existing_user.1.id, new_name).await?;
         Ok(user)
     }
 

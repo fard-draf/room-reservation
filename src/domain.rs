@@ -5,7 +5,7 @@ use crate::error::{ErrBook, ErrDomain, ErrRoom, ErrUser};
 
 ////////////////////////////USERS
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct User {
     pub user_id: UserID,
     pub user_name: UserName,
@@ -20,7 +20,7 @@ impl User {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct UserID {
     pub id: Uuid,
 }
@@ -36,7 +36,7 @@ impl Default for UserID {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, sqlx::FromRow)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, sqlx::FromRow)]
 pub struct UserName {
     pub name: String,
 }
@@ -80,7 +80,7 @@ impl Room {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, sqlx::FromRow)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, sqlx::FromRow)]
 pub struct RoomName {
     pub name: String,
 }
@@ -112,7 +112,7 @@ impl RoomName {
 // // }
 
 ////////////////////////////REGISTERY BOOK
-#[derive(Debug, sqlx::FromRow, PartialEq, Clone)]
+#[derive(Debug, sqlx::FromRow, Eq, Hash, PartialEq, Clone)]
 pub struct Book {
     pub id: i32,
     pub room_name: RoomName,
@@ -130,7 +130,7 @@ impl Book {
         })
     }
 }
-#[derive(Debug, PartialEq, Clone, sqlx::FromRow)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, sqlx::FromRow)]
 pub struct BookDate {
     pub date: NaiveDate,
 }
