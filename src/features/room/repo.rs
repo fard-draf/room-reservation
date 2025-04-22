@@ -64,7 +64,7 @@ impl RoomRepo for DBClient {
             .await
             .map_err(|_e| ErrRepo::DoesntExist)?;
 
-        Ok(!result.rows_affected() == 0)
+        Ok(result.rows_affected() != 0)
     }
 
     async fn get_all_rooms(&self) -> Result<Vec<Room>, ErrService> {

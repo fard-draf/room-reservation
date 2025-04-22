@@ -48,7 +48,7 @@ impl<T: RoomRepo> RoomService<T> {
         if deleted {
             Ok(())
         } else {
-            Err(ErrService::Repo(ErrRepo::Unreachable))
+            Err(ErrService::Repo(ErrRepo::UnableToDelete))
         }
     }
 
