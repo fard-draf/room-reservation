@@ -26,7 +26,7 @@ impl UserRepo for DBClient {
         .bind(&user.user_name.name)
         .fetch_one(&self.pool)
         .await
-        .map_err(|_e| ErrRepo::Unreachable)?;
+        .map_err(|_e| ErrRepo::BadRequest)?;
 
         let user: User = row.try_into()?;
         Ok(user)
