@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     domain::{Book, BookDate, RoomName, UserName},
     error::{ErrBook, ErrDomain, ErrRepo, ErrService},
@@ -43,15 +45,21 @@ where
             return Err(ErrService::Book(ErrBook::AlreadyBooked));
         }
 
-        let mut existing_rooms: Vec<RoomName> = Vec::new();
-        for element in self.repo.get_all_rooms().await? {
-            existing_rooms.push(element.room_name);
-        }
+        let existing_rooms: HashSet<RoomName> = self
+            .repo
+            .get_all_rooms()
+            .await?
+            .into_iter()
+            .map(|r| r.room_name)
+            .collect();
 
-        let mut existing_users: Vec<UserName> = vec![];
-        for element in self.repo.get_all_users().await? {
-            existing_users.push(element.user_name);
-        }
+        let existing_users: HashSet<UserName> = self
+            .repo
+            .get_all_users()
+            .await?
+            .into_iter()
+            .map(|u| u.user_name)
+            .collect();
 
         if book.date.date < Local::now().date_naive() {
             return Err(ErrService::Book(ErrBook::InvalidDate));
@@ -79,13 +87,62 @@ where
         let room = RoomName::new(room)?;
         let user = UserName::new(user)?;
         let date = BookDate::new(date)?;
-        let book = Book::new(&room.name, &user.name, date)?;
-        let mut id_book = Vec::new();
-        for element in self.repo.get_all_books().await? {
-            id_book.push(element.id)
-        }
-        if !id_book.contains(&old_book_id) {
+
+        let book = Book {
+            id: old_book_id,
+            room_name: room,
+            user_name: user,
+            date,
+        };
+
+        let existing_id: HashSet<i32> = self
+            .repo
+            .get_all_books()
+            .await?
+            .into_iter()
+            .map(|b| b.id)
+            .collect();
+
+        let existing_rooms: HashSet<RoomName> = self
+            .repo
+            .get_all_rooms()
+            .await?
+            .into_iter()
+            .map(|r| r.room_name)
+            .collect();
+
+        let existing_users: HashSet<UserName> = self
+            .repo
+            .get_all_users()
+            .await?
+            .into_iter()
+            .map(|u| u.user_name)
+            .collect();
+
+        if !existing_id.contains(&old_book_id) {
             return Err(ErrService::Book(ErrBook::UnableToRead));
+        }
+
+        if self
+            .repo
+            .get_all_books()
+            .await?
+            .iter()
+            .any(|x| (x.date.date == book.date.date) && (x.room_name.name == book.room_name.name))
+        {
+            println!("Already booked");
+            return Err(ErrService::Book(ErrBook::AlreadyBooked));
+        }
+
+        if book.date.date < Local::now().date_naive() {
+            return Err(ErrService::Book(ErrBook::InvalidDate));
+        }
+
+        if !existing_rooms.contains(&book.room_name) {
+            return Err(ErrService::Book(ErrBook::RoomNotFound));
+        }
+        if !existing_users.contains(&book.user_name) {
+            return Err(ErrService::Book(ErrBook::UserNotFound));
         }
 
         let book = self.repo.update_book(&book).await?;

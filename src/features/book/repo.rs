@@ -1,5 +1,5 @@
 use crate::{
-    domain::{Book, RoomName, UserName},
+    domain::{Book, BookDate, RoomName, UserName},
     error::{ErrBook, ErrRepo, ErrService, ErrType},
     features::{book::dto::BookRowDto, room::repo::RoomRepo, user::repo::UserRepo},
     infra::db::DBClient,
@@ -22,25 +22,6 @@ pub trait BookRepo {
 #[async_trait]
 impl BookRepo for DBClient {
     async fn insert_book(&self, book: &Book) -> Result<Book, ErrService> {
-        let mut existing_rooms: Vec<RoomName> = Vec::new();
-        for element in self.get_all_rooms().await? {
-            existing_rooms.push(element.room_name);
-        }
-
-        let mut existing_users: Vec<UserName> = vec![];
-        for element in self.get_all_users().await? {
-            existing_users.push(element.user_name);
-        }
-
-        if book.date.date < Local::now().date_naive() {
-            return Err(ErrService::Book(ErrBook::InvalidDate));
-        }
-        if !existing_rooms.contains(&book.room_name) {
-            return Err(ErrService::Book(ErrBook::RoomNotFound));
-        }
-        if !existing_users.contains(&book.user_name) {
-            return Err(ErrService::Book(ErrBook::UserNotFound));
-        }
         let row = sqlx::query_as::<_, BookRowDto>(
                 "INSERT INTO books (room_name, user_name, date) VALUES ($1, $2, $3) RETURNING id, room_name, user_name, date"
                 )
@@ -64,7 +45,7 @@ impl BookRepo for DBClient {
 
     async fn update_book(&self, book: &Book) -> Result<Book, ErrService> {
         let row = sqlx::query_as::<_, BookRowDto>(
-            "INSERT INTO books (id, room_name, user_name, date) VALUES ($1, $2, $3, $4) RETURNING id, room_name, user_name, date",
+            "UPDATE books SET room_name = $2, user_name = $3, date = $4 WHERE id = $1  RETURNING id, room_name, user_name, date",
             )
             .bind(book.id)
             .bind(&book.room_name.name)
@@ -74,7 +55,17 @@ impl BookRepo for DBClient {
             .await
             .map_err(|_e| ErrRepo::BadRequest)?;
 
-        let book: Book = row.try_into()?;
+        // let book: Book = row.try_into()?;
+        let book: Book = Book {
+            id: book.id,
+            room_name: RoomName {
+                name: row.room_name,
+            },
+            user_name: UserName {
+                name: row.user_name,
+            },
+            date: BookDate { date: row.date },
+        };
         Ok(book)
     }
 
