@@ -16,7 +16,7 @@ use crate::{
 
 pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(300)
         .connect(database_url)
         .await?;
 

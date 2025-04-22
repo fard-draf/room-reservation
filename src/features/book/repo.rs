@@ -70,11 +70,12 @@ impl BookRepo for DBClient {
     }
 
     async fn get_all_books(&self) -> Result<Vec<Book>, ErrService> {
-        let rows =
-            sqlx::query_as::<_, BookRowDto>("SELECT id, room_name, user_name, date FROM books")
-                .fetch_all(&self.pool)
-                .await
-                .map_err(|_e| ErrType::RawConversionFailed)?;
+        let rows = sqlx::query_as::<_, BookRowDto>(
+            "SELECT id, room_name, user_name, date FROM books ORDER BY date DESC LIMIT 50",
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|_e| ErrType::RawConversionFailed)?;
 
         let books = rows
             .into_iter()

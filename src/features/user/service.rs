@@ -40,14 +40,6 @@ impl<T: UserRepo> UserService<T> {
         let old_name = UserName::new(&old_name.trim().to_lowercase())?;
         let new_name = UserName::new(&new_name.trim().to_lowercase())?;
 
-        // let users = self.repo.get_all_users().await?;
-
-        // let existing_user = users
-        //     .iter()
-        //     .find(|u| u.user_name == old_name)
-        //     .cloned()
-        //     .ok_or(ErrService::User(ErrUser::UserNotFound))?;
-
         let existing_users: HashSet<(UserName, UserID)> = self
             .repo
             .get_all_users()
