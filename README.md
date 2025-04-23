@@ -2,6 +2,8 @@
 
 This project is a high-performance REST API for managing room bookings, built in Rust using the [Axum](https://github.com/tokio-rs/axum) web framework and PostgreSQL via [SQLx](https://github.com/launchbadge/sqlx).
 
+---
+
 ## Goals
 
 - Learn and apply modern backend development in Rust
@@ -32,30 +34,40 @@ This project is a high-performance REST API for managing room bookings, built in
 - Create a room booking for a given date
 - Validate that room and user exist (via `HashSet`)
 - Prevent bookings in the past
+- Prevent double-booking on the same date
 
 ---
 
-## Benchmarks
+## Benchmarks & Performance Insights
 
-Tests were performed with [`wrk`](https://github.com/wg/wrk) locally (127.0.0.1) on a homelab with sufficient free resources.
+All tests were conducted locally using [`wrk`](https://github.com/wg/wrk) with Lua script payloads.
 
-### Results – `POST /book` (with `HashSet` validation + SQL write)
+### Summary of Key Metrics
 
-```bash
-wrk -t4 -c10 -d10s -s post_book.lua http://localhost:3000/book
+| Threads | Conns | Req/sec | Latency Avg | 2xx | 409 | Notes |
+|---------|-------|---------|-------------|-----|-----|-------|
+| 4       | 10    | **362** | 22 ms       | 82% | 18% | Optimal load point |
+| 8       | 20    | 370     | 47 ms       | 69% | 30% | Latency rising     |
+| 8       | 80    | 387     | 204 ms      | 71% | 29% | Saturation reached |
+
+### 📊 Analysis
+
+- The API consistently delivers **350+ req/sec** under realistic load.
+- At higher concurrency (`-c80`), **latency explodes** without meaningful gain in throughput.
+- Logical conflicts (`409`) rise with parallelism — **integrity is preserved**.
+- **No `5xx` errors** at any level → backend remains technically stable.
+
+### 🔹 Graph (textual)
+
+```
+Load (conn)  →    10     20     80
+Req/s        →   362    370    387
+Latency (ms) →    22     47    204
 ```
 
-| Threads | Connections | Req/s | Avg Latency | Non-2xx |
-|---------|-------------|-------|-------------|----------|
-| 4       | 10          | **320** | 24.92 ms    | 610      |
-| 2       | 10          | ~296   | 39 ms       | ~300     |
-| 8       | 10          | ~216   | 36 ms       | ~63      |
-
-💡 The backend remains **stable and responsive**, handling hundreds of `POST` requests per second **with strong validation logic** (checking user/room/date).
-
 ---
 
-## Lua Script used for the Benchmark
+## 📃 Lua Script Used for Benchmark
 
 ```lua
 -- post_book.lua
@@ -71,7 +83,7 @@ request = function()
 
   local now = os.time()
   local d = os.date("!*t", now + offset_days * 86400)
-  local formatted_date = string.format("%02d.%02d.%02d", d.day, d.month, d.year % 100)
+  local formatted_date = string.format("%02d.%02d.%02d", d.day, d.month, d.year %% 100)
 
   local body = string.format(
     '{"room_name":"ROOM%d","user_name":"user%d","date":"%s"}',
@@ -87,23 +99,14 @@ end
 ## Conclusion
 
 This API demonstrates that:
-- Rust is **extremely performant** for backend development
-- A simple architecture (`Axum` + `SQLx`) can sustain high loads
-- Code remains **testable, validatable, and maintainable**
 
----
+- Rust is a top-tier choice for building fast and safe backends
+- Even with a simple architecture (Axum + SQLx), high concurrency can be handled
+- Data integrity and validation are preserved even under load
+- Benchmarking with `wrk` helps identify optimal concurrency levels and limits
 
-## Roadmap / Ideas
 
-- Pagination for `/book`
-- Rate limiting or auth middleware
-- Export reservations to CSV
-- Lightweight web interface (Tauri or WebAssembly)
 
----
-
-## 🧑‍💻 Author
-
-Developed as part of a Rust backend self-learning journey.  
-Contributions and feedback are welcome!
+Built as part of a self-learning journey in Rust backend development.
+Feedback, suggestions, and contributions are welcome!
 
