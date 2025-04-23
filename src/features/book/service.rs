@@ -72,7 +72,6 @@ where
         }
 
         let book = self.repo.insert_book(&book).await?;
-        println!("{:?} reserved on {:?}, id: {}", room, desired_date, book.id);
 
         Ok(book)
     }

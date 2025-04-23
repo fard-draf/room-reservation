@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod test {
 
+    use std::collections::HashSet;
+
     use crate::{
         domain::{User, UserName},
         error::{ErrRepo, ErrService, ErrUser},

@@ -54,7 +54,7 @@ impl<T: RoomRepo> RoomService<T> {
         }
     }
 
-    pub async fn list_rooms(&self) -> Result<HashSet<Room>, ErrService> {
+    pub async fn list_rooms(&self) -> Result<Vec<Room>, ErrService> {
         self.repo.get_all_rooms().await
     }
 

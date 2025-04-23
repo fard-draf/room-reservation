@@ -42,7 +42,7 @@ pub async fn create_booking(
         })?;
 
     tracing::info!(
-        "✅ Booking created: id = {:?}, user = {:?}, room = {:?}, date = {:?}",
+        "Booking created: id = {:?}, user = {:?}, room = {:?}, date = {:?}",
         dto.id,
         dto.user_name,
         dto.room_name,

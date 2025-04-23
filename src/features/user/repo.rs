@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     domain::{User, UserID, UserName},
     error::{ErrRepo, ErrService},
@@ -65,7 +67,7 @@ impl UserRepo for DBClient {
             .await
             .map_err(|_e| ErrRepo::BadRequest)?;
 
-        let users = rows
+        let users: Vec<User> = rows
             .into_iter()
             .map(|dto| dto.try_into().map_err(|_| ErrRepo::DoesntExist))
             .collect::<Result<_, _>>()?;

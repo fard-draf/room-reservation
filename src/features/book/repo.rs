@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     domain::{Book, BookDate, RoomName, UserName},
     error::{ErrBook, ErrRepo, ErrService, ErrType},
@@ -74,7 +76,7 @@ impl BookRepo for DBClient {
         .await
         .map_err(|_e| ErrType::RawConversionFailed)?;
 
-        let books = rows
+        let books: Vec<Book> = rows
             .into_iter()
             .map(|dto| dto.try_into().map_err(|_| ErrBook::UnableToRead))
             .collect::<Result<_, _>>()?;
@@ -90,7 +92,7 @@ impl BookRepo for DBClient {
             .map_err(|_e| ErrRepo::BadRequest)?;
 
         if result.rows_affected() == 0 {
-            Err(ErrService::Repo(ErrRepo::DoesntExist))
+            Err(ErrService::Book(ErrBook::InvalidID))
         } else {
             Ok(true)
         }
@@ -103,7 +105,7 @@ impl BookRepo for DBClient {
             .map_err(|_e| ErrRepo::BadRequest)?;
 
         if result.rows_affected() == 0 {
-            Err(ErrService::Repo(ErrRepo::DoesntExist))
+            Err(ErrService::Repo(ErrRepo::IsEmpty))
         } else {
             Ok(true)
         }
