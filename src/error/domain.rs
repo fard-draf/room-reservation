@@ -39,6 +39,7 @@ pub enum ErrRepo {
     RequestError,
     BadRequest,
     UnableToDelete,
+    IsEmpty,
 }
 
 #[derive(Debug)]

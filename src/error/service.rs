@@ -100,6 +100,7 @@ impl IntoResponse for ErrService {
                 (StatusCode::SERVICE_UNAVAILABLE, body).into_response()
             }
             ErrService::Repo(ErrRepo::DoesntExist) => not_found("Not found in the system"),
+            ErrService::Repo(ErrRepo::IsEmpty) => not_found("Already empty"),
             ErrService::Repo(ErrRepo::UnableToDelete) => unavailable("Unable to do this action"),
             _ => {
                 let body = json!({ "error": "Service error" });
