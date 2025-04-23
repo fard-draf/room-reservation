@@ -57,7 +57,7 @@ impl UserName {
 
 ////////////////////////////ROOMS
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub struct Room {
     pub id: i32,
     pub room_name: RoomName,

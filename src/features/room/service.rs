@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::{
     domain::{Room, RoomName},
     error::{ErrRepo, ErrRoom, ErrService},
@@ -52,7 +54,7 @@ impl<T: RoomRepo> RoomService<T> {
         }
     }
 
-    pub async fn list_rooms(&self) -> Result<Vec<Room>, ErrService> {
+    pub async fn list_rooms(&self) -> Result<HashSet<Room>, ErrService> {
         self.repo.get_all_rooms().await
     }
 
