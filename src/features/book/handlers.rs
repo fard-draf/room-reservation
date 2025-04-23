@@ -19,11 +19,35 @@ pub async fn create_booking(
     State(state): State<AppState>,
     Json(payload): Json<CreateBookDto>,
 ) -> Result<impl IntoResponse, ErrService> {
+    tracing::info!(
+        "Trying to create book with user {:?}, room {:?}, date {:?}",
+        payload.user_name,
+        payload.room_name,
+        payload.date
+    );
+
     let service = state.book_service.lock().await;
 
     let dto = service
         .book_room(&payload.room_name, &payload.user_name, &payload.date)
-        .await?;
+        .await
+        .map_err(|err| {
+            tracing::warn!(
+                "Booking failed for user = {:?}, room = {:?}, reason = {:?}",
+                payload.user_name,
+                payload.room_name,
+                err
+            );
+            err
+        })?;
+
+    tracing::info!(
+        "✅ Booking created: id = {:?}, user = {:?}, room = {:?}, date = {:?}",
+        dto.id,
+        dto.user_name,
+        dto.room_name,
+        dto.date
+    );
 
     let book_dto = BookDto {
         id: dto.id,

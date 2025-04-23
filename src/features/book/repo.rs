@@ -1,14 +1,11 @@
 use crate::{
     domain::{Book, BookDate, RoomName, UserName},
     error::{ErrBook, ErrRepo, ErrService, ErrType},
-    features::{book::dto::BookRowDto, room::repo::RoomRepo, user::repo::UserRepo},
+    features::book::dto::BookRowDto,
     infra::db::DBClient,
 };
 
 use async_trait::async_trait;
-use chrono::Local;
-
-use super::dto::UpdateBookDto;
 
 #[async_trait]
 pub trait BookRepo {

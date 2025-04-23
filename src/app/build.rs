@@ -1,11 +1,14 @@
-use axum::Router;
+use axum::{Router, middleware::from_fn};
 use sqlx::postgres::PgPoolOptions;
 use std::{error::Error, sync::Arc};
 use tokio::sync::Mutex;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::{
+    cors::{Any, CorsLayer},
+    trace::TraceLayer,
+};
 
 use crate::{
-    app::state::AppState,
+    app::{state::AppState, status_test::log_status},
     features::{
         book::{routes::book_routes, service::BookService},
         room::{routes::room_routes, service::RoomService},
@@ -16,7 +19,7 @@ use crate::{
 
 pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
     let pool = PgPoolOptions::new()
-        .max_connections(300)
+        .max_connections(20)
         .connect(database_url)
         .await?;
 
@@ -38,7 +41,8 @@ pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
         .merge(room_routes())
         .merge(user_routes())
         .with_state(state)
-        .layer(cors);
+        .layer(cors)
+        .layer(from_fn(log_status));
 
     Ok(app)
 }

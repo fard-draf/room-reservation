@@ -1,9 +1,14 @@
 use std::{error::Error, net::SocketAddr};
 
 use room_reservations::{app::build::build_app, config::Config};
+use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let subscriber = FmtSubscriber::builder().with_env_filter("info").finish();
+
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+
     dotenv::dotenv().ok();
 
     let config = Config::init();

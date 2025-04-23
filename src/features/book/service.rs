@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::{
     domain::{Book, BookDate, RoomName, UserName},
     error::{ErrBook, ErrDomain, ErrRepo, ErrService},
-    features::{book::dto::BookRowDto, room::repo::RoomRepo, user::repo::UserRepo},
+    features::{room::repo::RoomRepo, user::repo::UserRepo},
 };
 
 use super::repo::BookRepo;

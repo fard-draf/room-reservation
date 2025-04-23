@@ -22,3 +22,11 @@ sqlx = { version = "0.8", features = [
     "chrono",
     "uuid",
 ] }
+
+# Log
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+tracing-log = "0.2"
+
+[profile.release]
+debug = true
