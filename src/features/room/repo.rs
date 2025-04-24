@@ -20,15 +20,6 @@ pub trait RoomRepo {
 #[async_trait]
 impl RoomRepo for DBClient {
     async fn insert_room(&self, room: &Room) -> Result<Room, ErrService> {
-        if self
-            .get_all_rooms()
-            .await?
-            .iter()
-            .any(|r| r.room_name == room.room_name)
-        {
-            return Err(ErrService::Room(ErrRoom::AlreadyExist));
-        }
-
         let row: RoomRowDto = sqlx::query_as::<_, RoomRowDto>(
             "INSERT INTO rooms (room_name) VALUES ($1) RETURNING id, room_name",
         )

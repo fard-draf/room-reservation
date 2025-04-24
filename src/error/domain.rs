@@ -25,6 +25,7 @@ pub enum ErrBook {
     InvalidDate,
     InvalidID,
     UnableToRead,
+    BookNotFound,
 }
 
 #[derive(Debug)]

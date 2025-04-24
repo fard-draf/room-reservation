@@ -26,7 +26,10 @@ pub async fn create_booking(
         payload.date
     );
 
+    let now = std::time::Instant::now();
     let service = state.book_service.lock().await;
+    let elapsed = now.elapsed();
+    tracing::debug!("Acquired book_service lock in {:?}", elapsed.as_micros());
 
     let dto = service
         .book_room(&payload.room_name, &payload.user_name, &payload.date)

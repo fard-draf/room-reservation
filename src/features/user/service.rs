@@ -1,38 +1,50 @@
-use std::collections::HashSet;
-
 use crate::{
     domain::{User, UserID, UserName},
     error::{ErrRepo, ErrService, ErrUser},
 };
 
+use std::collections::HashSet;
+use tokio::sync::RwLock;
+
 use super::repo::UserRepo;
 
 #[derive(Debug)]
 pub struct UserService<T> {
-    repo: T,
+    pub repo: T,
+    cache: RwLock<HashSet<User>>,
 }
 
 impl<T> UserService<T> {
     pub fn new(repo: T) -> Self {
-        Self { repo }
+        Self {
+            repo,
+            cache: RwLock::new(HashSet::new()),
+        }
+    }
+
+    pub async fn get_user_from_cache(&self, name: &UserName) -> Result<Option<User>, ErrService> {
+        let guard = self.cache.read().await;
+        Ok(guard.iter().find(|u| u.user_name == *name).cloned())
     }
 }
 
 impl<T: UserRepo> UserService<T> {
     pub async fn add_user(&self, name: &str) -> Result<User, ErrService> {
-        let user = User::new(&name.trim().to_lowercase())?;
-        let existing_users: HashSet<UserName> = self
-            .repo
-            .get_all_users()
-            .await?
-            .into_iter()
-            .map(|u| u.user_name)
-            .collect();
+        let user = User::new(name)?;
 
-        if existing_users.contains(&user.user_name) {
+        let is_existing_user = self.is_exist_user(&user.user_name).await?;
+
+        if is_existing_user {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
         let user = self.repo.insert_user(&user).await?;
+        let mut cache = self.cache.write().await;
+        cache.insert(user.clone());
+        tracing::info!(
+            "User added to cache: {:?} cache has now {} entries",
+            user,
+            cache.len()
+        );
         Ok(user)
     }
 
@@ -40,33 +52,39 @@ impl<T: UserRepo> UserService<T> {
         let old_name = UserName::new(&old_name.trim().to_lowercase())?;
         let new_name = UserName::new(&new_name.trim().to_lowercase())?;
 
-        let existing_users: HashSet<(UserName, UserID)> = self
-            .repo
-            .get_all_users()
-            .await?
-            .into_iter()
-            .map(|u| (u.user_name, u.user_id))
-            .collect();
+        if !self.is_exist_user(&old_name).await? {
+            return Err(ErrService::User(ErrUser::UserNotFound));
+        }
 
-        let existing_user = existing_users
-            .iter()
-            .find(|u| u.0 == old_name)
-            .cloned()
-            .ok_or(ErrService::User(ErrUser::UserNotFound))?;
-
-        if existing_users.iter().any(|u| u.0 == new_name) {
+        if self.is_exist_user(&new_name).await? {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
 
-        let user = self.repo.update_user(existing_user.1.id, new_name).await?;
-        Ok(user)
+        let maybe_user = {
+            let guard = self.cache.read().await;
+            guard.iter().find(|u| u.user_name == old_name).cloned()
+        };
+
+        if let Some(old_user) = maybe_user {
+            let updated_user = self.repo.update_user(old_user.user_id.id, new_name).await?;
+
+            let mut cache = self.cache.write().await;
+            cache.remove(&old_user);
+            cache.insert(updated_user.clone());
+
+            Ok(updated_user)
+        } else {
+            Err(ErrService::User(ErrUser::UserNotFound))
+        }
     }
 
-    pub async fn delete_user(&mut self, user_name: &str) -> Result<(), ErrService> {
+    pub async fn delete_user_by_name(&self, user_name: &str) -> Result<(), ErrService> {
         let user_name = UserName::new(user_name)?;
 
-        let deleted = self.repo.delete_user_by_name(user_name).await?;
+        let deleted = self.repo.delete_user_by_name(user_name.clone()).await?;
         if deleted {
+            let mut guard = self.cache.write().await;
+            guard.retain(|u| u.user_name != user_name);
             Ok(())
         } else {
             Err(ErrService::Repo(ErrRepo::DoesntExist))
@@ -77,10 +95,49 @@ impl<T: UserRepo> UserService<T> {
         self.repo.get_all_users().await
     }
 
-    pub async fn is_exist_user(&self, user: &str) -> Result<bool, ErrService> {
-        let user = UserName::new(user)?;
-        let user_list = self.repo.get_all_users().await?;
+    pub async fn is_exist_user(&self, user: &UserName) -> Result<bool, ErrService> {
+        let user_list = self.cache.read().await;
+        if user_list.iter().any(|u| u.user_name == *user) {
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
 
-        Ok(user_list.iter().any(|x| x.user_name == user))
+    pub async fn get_cache_user_by_user_struct(&self, user: &User) -> Result<User, ErrService> {
+        if self.cache.read().await.contains(user) {
+            Err(ErrService::User(ErrUser::AlreadyExist))
+        } else if let Some(value) = self.cache.read().await.get(&user.clone()) {
+            Ok(value.clone())
+        } else {
+            return Err(ErrService::User(ErrUser::UserNotFound));
+        }
+    }
+
+    pub async fn get_cache_user_by_id(&self, user_id: UserID) -> Result<Option<User>, ErrService> {
+        if let Some(user_by_id) = self
+            .cache
+            .read()
+            .await
+            .iter()
+            .find(|x| x.user_id == user_id)
+        {
+            Ok(Some(user_by_id.clone()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn populate_cache(&self) -> Result<(), ErrService> {
+        println!("[populate_cache] instance UserService: {:p}", self);
+        let users = self.repo.get_all_users().await?;
+        for element in users {
+            let room = User {
+                user_id: element.user_id,
+                user_name: element.user_name,
+            };
+            self.cache.write().await.insert(room);
+        }
+        Ok(())
     }
 }

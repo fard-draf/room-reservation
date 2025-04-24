@@ -20,7 +20,7 @@ pub async fn create_room(
     State(state): State<AppState>,
     Json(payload): Json<CreateRoomDto>,
 ) -> Result<impl IntoResponse, ErrService> {
-    let service = state.room_service.lock().await;
+    let service = state.room_service;
 
     let dto = service.add_room(&payload.room_name).await?;
     let room_dto = RoomDto {
@@ -35,7 +35,7 @@ pub async fn update_room_name(
     State(state): State<AppState>,
     Json(payload): Json<UpdateRoomDto>,
 ) -> Result<impl IntoResponse, ErrService> {
-    let service = state.room_service.lock().await;
+    let service = state.room_service;
 
     let dto = service
         .update_room(&payload.old_name, &payload.new_name)
@@ -50,7 +50,7 @@ pub async fn update_room_name(
 }
 
 pub async fn list_room(State(state): State<AppState>) -> Result<impl IntoResponse, ErrService> {
-    let service = state.room_service.lock().await;
+    let service = state.room_service;
     let rooms = service.list_rooms().await?;
 
     let dto: Vec<RoomDto> = rooms
@@ -68,7 +68,7 @@ pub async fn delete_room(
     State(state): State<AppState>,
     Json(payload): Json<DeleteRoomByIdDto>,
 ) -> Result<impl IntoResponse, ErrService> {
-    let mut service = state.room_service.lock().await;
+    let mut service = state.room_service;
 
     service.delete_room_by_id(payload.id).await?;
 
