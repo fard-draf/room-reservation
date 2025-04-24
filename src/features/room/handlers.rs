@@ -68,7 +68,7 @@ pub async fn delete_room(
     State(state): State<AppState>,
     Json(payload): Json<DeleteRoomByIdDto>,
 ) -> Result<impl IntoResponse, ErrService> {
-    let mut service = state.room_service.lock().await;
+    let service = state.room_service.lock().await;
 
     service.delete_room_by_id(payload.id).await?;
 

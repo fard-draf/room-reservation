@@ -15,20 +15,12 @@ pub trait RoomRepo {
     async fn update_room(&self, id: i32, new_name: RoomName) -> Result<Room, ErrService>;
     async fn delete_room_by_id(&self, room: i32) -> Result<bool, ErrService>;
     async fn get_all_rooms(&self) -> Result<Vec<Room>, ErrService>;
+    // async fn get_one_room(&self, room_name: &RoomName) -> Result<Room, ErrService>;
 }
 
 #[async_trait]
 impl RoomRepo for DBClient {
     async fn insert_room(&self, room: &Room) -> Result<Room, ErrService> {
-        if self
-            .get_all_rooms()
-            .await?
-            .iter()
-            .any(|r| r.room_name == room.room_name)
-        {
-            return Err(ErrService::Room(ErrRoom::AlreadyExist));
-        }
-
         let row: RoomRowDto = sqlx::query_as::<_, RoomRowDto>(
             "INSERT INTO rooms (room_name) VALUES ($1) RETURNING id, room_name",
         )
@@ -60,26 +52,38 @@ impl RoomRepo for DBClient {
     }
 
     async fn delete_room_by_id(&self, room_name: i32) -> Result<bool, ErrService> {
-        let result = sqlx::query("DELETE FROM rooms WHERE id = $1")
+        let row = sqlx::query("DELETE FROM rooms WHERE id = $1")
             .bind(room_name)
             .execute(&self.pool)
             .await
             .map_err(|_e| ErrRepo::DoesntExist)?;
 
-        Ok(result.rows_affected() != 0)
+        Ok(row.rows_affected() != 0)
     }
 
     async fn get_all_rooms(&self) -> Result<Vec<Room>, ErrService> {
-        let vec = sqlx::query_as::<_, RoomRowDto>("SELECT id, room_name FROM rooms")
+        let row = sqlx::query_as::<_, RoomRowDto>("SELECT id, room_name FROM rooms")
             .fetch_all(&self.pool)
             .await
             .map_err(|_e| ErrRepo::BadRequest)?;
 
-        let rooms: Vec<Room> = vec
+        let rooms: Vec<Room> = row
             .into_iter()
             .map(|dto| dto.try_into().map_err(|_| ErrRepo::DoesntExist))
             .collect::<Result<_, _>>()?;
 
         Ok(rooms)
     }
+
+    // async fn get_one_room(&self, room_name: &RoomName) -> Result<Room, ErrService> {
+    //     let row = sqlx::query_as::<_, RoomRowDto>("SELECT * FROM rooms WHERE room_name = $1")
+    //         .bind(room_name.name)
+    //         .fetch_optional(&self.pool)
+    //         .await
+    //         .map_err(|_e| ErrRepo::BadRequest);
+
+    //     let room = Room {
+    //         room_name: r
+    //     }
+    // }
 }

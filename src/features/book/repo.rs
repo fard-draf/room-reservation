@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::{
     domain::{Book, BookDate, RoomName, UserName},
     error::{ErrBook, ErrRepo, ErrService, ErrType},

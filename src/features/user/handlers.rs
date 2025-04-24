@@ -69,9 +69,9 @@ pub async fn delete_user(
     State(state): State<AppState>,
     Json(payload): Json<CreateUserDto>,
 ) -> Result<impl IntoResponse, ErrService> {
-    let mut service = state.user_service.lock().await;
+    let service = state.user_service.lock().await;
 
-    service.delete_user(&payload.user_name).await?;
+    service.delete_user_by_name(&payload.user_name).await?;
 
     Ok(())
 }
