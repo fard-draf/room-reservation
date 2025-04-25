@@ -1,6 +1,6 @@
 use crate::{
     domain::{User, UserID, UserName},
-    error::{ErrRepo, ErrService},
+    error::{ErrRepo, ErrService, ErrUser},
     features::user::dto::UserRowDto,
     infra::db::DBClient,
 };
@@ -14,6 +14,7 @@ pub trait UserRepo: Send + Sync {
     async fn delete_user_by_name(&self, name: UserName) -> Result<bool, ErrService>;
     async fn get_all_users(&self) -> Result<Vec<User>, ErrService>;
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, ErrService>;
+    async fn get_one_user(&self, user_name: &UserName) -> Result<User, ErrService>;
 }
 
 #[async_trait]
@@ -86,6 +87,26 @@ impl UserRepo for DBClient {
         match row {
             Some(dto) => Ok(Some(User::try_from(dto)?)),
             None => Ok(None),
+        }
+    }
+
+    async fn get_one_user(&self, user_name: &UserName) -> Result<User, ErrService> {
+        let row = sqlx::query_as::<_, UserRowDto>("SELECT * FROM users WHERE user_name = $1")
+            .bind(&user_name.name)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|_e| ErrRepo::BadRequest)?;
+
+        if let Some(raw_user) = row {
+            let user = User {
+                user_name: UserName::new(&raw_user.user_name)?,
+                user_id: UserID {
+                    id: raw_user.user_id,
+                },
+            };
+            Ok(user)
+        } else {
+            Err(ErrService::User(ErrUser::UserNotFound))
         }
     }
 }

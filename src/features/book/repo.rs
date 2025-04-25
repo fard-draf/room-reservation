@@ -6,6 +6,7 @@ use crate::{
 };
 
 use async_trait::async_trait;
+use chrono::NaiveDate;
 
 #[async_trait]
 pub trait BookRepo {
@@ -14,6 +15,12 @@ pub trait BookRepo {
     async fn get_all_books(&self) -> Result<Vec<Book>, ErrService>;
     async fn delete_book_by_id(&self, id: i32) -> Result<bool, ErrService>;
     async fn delete_all_book(&self) -> Result<bool, ErrService>;
+    async fn get_one_book(&self, book: &Book) -> Result<Option<Book>, ErrService>;
+    async fn is_room_already_booked(
+        &self,
+        room: &str,
+        date: &NaiveDate,
+    ) -> Result<bool, ErrService>;
 }
 
 #[async_trait]
@@ -82,6 +89,32 @@ impl BookRepo for DBClient {
         Ok(books)
     }
 
+    async fn get_one_book(&self, book: &Book) -> Result<Option<Book>, ErrService> {
+        let row = sqlx::query_as::<_, BookRowDto>("SELECT * FROM books WHERE id = $1")
+            .bind(book.id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|_| ErrRepo::BadRequest)?;
+
+        if let Some(row_book) = row {
+            let book = Book {
+                id: row_book.id,
+                room_name: RoomName {
+                    name: (row_book.room_name),
+                },
+                user_name: UserName {
+                    name: (row_book.user_name),
+                },
+                date: BookDate {
+                    date: (row_book.date),
+                },
+            };
+            Ok(Some(book))
+        } else {
+            Ok(None)
+        }
+    }
+
     async fn delete_book_by_id(&self, id: i32) -> Result<bool, ErrService> {
         let result = sqlx::query("DELETE FROM books WHERE id = $1")
             .bind(id)
@@ -107,5 +140,20 @@ impl BookRepo for DBClient {
         } else {
             Ok(true)
         }
+    }
+
+    async fn is_room_already_booked(
+        &self,
+        room: &str,
+        date: &NaiveDate,
+    ) -> Result<bool, ErrService> {
+        let result = sqlx::query("SELECT 1 FROM books WHERE room_name = $1 AND date = $2 LIMIT 1")
+            .bind(room)
+            .bind(date)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|_| ErrService::Repo(ErrRepo::BadRequest))?;
+
+        Ok(result.is_some())
     }
 }

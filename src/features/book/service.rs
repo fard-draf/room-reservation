@@ -33,47 +33,29 @@ where
         let date =
             BookDate::new(desired_date).map_err(|_| ErrDomain::Book(ErrBook::InvalidDateFormat))?;
 
-        let book = Book::new(room, user, date)?;
-
-        let is_already_booked =
-            self.repo.get_all_books().await?.iter().any(|x| {
-                (x.date.date == book.date.date) && (x.room_name.name == *room.to_string())
-            });
-
-        if is_already_booked {
-            println!("Already booked");
-            return Err(ErrService::Book(ErrBook::AlreadyBooked));
-        }
-
-        let existing_rooms: HashSet<RoomName> = self
-            .repo
-            .get_all_rooms()
-            .await?
-            .into_iter()
-            .map(|r| r.room_name)
-            .collect();
-
-        let existing_users: HashSet<UserName> = self
-            .repo
-            .get_all_users()
-            .await?
-            .into_iter()
-            .map(|u| u.user_name)
-            .collect();
-
-        if book.date.date < Local::now().date_naive() {
+        if date.date < Local::now().date_naive() {
             return Err(ErrService::Book(ErrBook::InvalidDate));
         }
-        if !existing_rooms.contains(&book.room_name) {
+
+        let exist_room = self.repo.get_one_room(&RoomName::new(room)?).await.is_ok();
+        if !exist_room {
             return Err(ErrService::Book(ErrBook::RoomNotFound));
         }
-        if !existing_users.contains(&book.user_name) {
+
+        let exist_user = self.repo.get_one_user(&UserName::new(user)?).await.is_ok();
+        if !exist_user {
             return Err(ErrService::Book(ErrBook::UserNotFound));
         }
 
-        let book = self.repo.insert_book(&book).await?;
+        let already_booked = self.repo.is_room_already_booked(room, &date.date).await?;
+        if already_booked {
+            return Err(ErrService::Book(ErrBook::AlreadyBooked));
+        }
 
-        Ok(book)
+        let book = Book::new(room, user, date)?;
+        let inserted_book = self.repo.insert_book(&book).await?;
+
+        Ok(inserted_book)
     }
 
     pub async fn update_book_by_id(
@@ -152,7 +134,7 @@ where
         self.repo.get_all_books().await
     }
 
-    pub async fn delete_book_by_id(&mut self, book_id: i32) -> Result<(), ErrService> {
+    pub async fn delete_book_by_id(&self, book_id: i32) -> Result<(), ErrService> {
         let deleted = self.repo.delete_book_by_id(book_id).await?;
         if deleted {
             Ok(())
@@ -161,7 +143,7 @@ where
         }
     }
 
-    pub async fn delete_all_book(&mut self) -> Result<(), ErrService> {
+    pub async fn delete_all_book(&self) -> Result<(), ErrService> {
         let deleted = self.repo.delete_all_book().await?;
         if deleted {
             Ok(())

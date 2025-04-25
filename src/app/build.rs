@@ -16,7 +16,7 @@ use crate::{
 
 pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
     let pool = PgPoolOptions::new()
-        .max_connections(20)
+        .max_connections(30)
         .connect(database_url)
         .await?;
 
@@ -32,7 +32,7 @@ pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
     let state = AppState {
         user_service: user_service.clone(),
         room_service: room_service.clone(),
-        book_service: Arc::new(Mutex::new(BookService::new(db_client.clone()))),
+        book_service: Arc::new(BookService::new(db_client.clone())),
     };
 
     let cors = CorsLayer::new()

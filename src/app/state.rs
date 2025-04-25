@@ -10,7 +10,7 @@ use crate::{
 
 pub type SharedUserService = Arc<Mutex<UserService<DBClient>>>;
 pub type SharedRoomService = Arc<Mutex<RoomService<DBClient>>>;
-pub type SharedBookService = Arc<Mutex<BookService<DBClient>>>;
+pub type SharedBookService = Arc<BookService<DBClient>>;
 
 #[derive(Clone)]
 pub struct AppState {

@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::{
     domain::{Room, RoomName},
     error::{ErrRepo, ErrRoom, ErrService},
@@ -15,7 +13,7 @@ pub trait RoomRepo {
     async fn update_room(&self, id: i32, new_name: RoomName) -> Result<Room, ErrService>;
     async fn delete_room_by_id(&self, room: i32) -> Result<bool, ErrService>;
     async fn get_all_rooms(&self) -> Result<Vec<Room>, ErrService>;
-    // async fn get_one_room(&self, room_name: &RoomName) -> Result<Room, ErrService>;
+    async fn get_one_room(&self, room_name: &RoomName) -> Result<Room, ErrService>;
 }
 
 #[async_trait]
@@ -75,15 +73,21 @@ impl RoomRepo for DBClient {
         Ok(rooms)
     }
 
-    // async fn get_one_room(&self, room_name: &RoomName) -> Result<Room, ErrService> {
-    //     let row = sqlx::query_as::<_, RoomRowDto>("SELECT * FROM rooms WHERE room_name = $1")
-    //         .bind(room_name.name)
-    //         .fetch_optional(&self.pool)
-    //         .await
-    //         .map_err(|_e| ErrRepo::BadRequest);
+    async fn get_one_room(&self, room_name: &RoomName) -> Result<Room, ErrService> {
+        let row = sqlx::query_as::<_, RoomRowDto>("SELECT * FROM rooms WHERE room_name = $1")
+            .bind(&room_name.name)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|_e| ErrRepo::BadRequest)?;
 
-    //     let room = Room {
-    //         room_name: r
-    //     }
-    // }
+        if let Some(raw_room) = row {
+            let room = Room {
+                room_name: RoomName::new(&raw_room.room_name)?,
+                id: raw_room.id,
+            };
+            Ok(room)
+        } else {
+            Err(ErrService::Room(ErrRoom::RoomNotFound))
+        }
+    }
 }
