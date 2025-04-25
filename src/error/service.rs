@@ -65,9 +65,7 @@ impl IntoResponse for ErrService {
             ErrService::Book(ErrBook::RoomNotFound) => not_found("Room not found in the system"),
             ErrService::Book(ErrBook::UserNotFound) => not_found("User not found in the system"),
             ErrService::Book(ErrBook::UnableToRead) => internal_error("Unable to read book"),
-            ErrService::Book(ErrBook::InvalidID) => {
-                bad_request("Invalid ID request, please check book ID")
-            }
+            ErrService::Book(ErrBook::InvalidID) => bad_request("Invalid ID, please check book ID"),
             ///// USER ERROR
             ErrService::User(ErrUser::InvalidNameTooShort) => {
                 unprocessable_entity("User's name is too short")

@@ -1,4 +1,5 @@
-use std::collections::HashSet;
+use dashmap::{self, DashSet};
+use tracing::info;
 
 use crate::{
     domain::{Book, BookDate, RoomName, UserName},
@@ -12,11 +13,15 @@ use chrono::Local;
 
 pub struct BookService<T> {
     repo: T,
+    cache: DashSet<Book>,
 }
 
 impl<T> BookService<T> {
     pub fn new(repo: T) -> Self {
-        Self { repo }
+        Self {
+            repo,
+            cache: DashSet::new(),
+        }
     }
 }
 
@@ -32,28 +37,30 @@ where
     ) -> Result<Book, ErrService> {
         let date =
             BookDate::new(desired_date).map_err(|_| ErrDomain::Book(ErrBook::InvalidDateFormat))?;
+        let room_name = RoomName::new(room)?;
+        let user_name = UserName::new(user)?;
 
         if date.date < Local::now().date_naive() {
             return Err(ErrService::Book(ErrBook::InvalidDate));
         }
 
-        let exist_room = self.repo.get_one_room(&RoomName::new(room)?).await.is_ok();
+        let exist_room = self.repo.get_one_room(&room_name).await.is_ok();
         if !exist_room {
             return Err(ErrService::Book(ErrBook::RoomNotFound));
         }
 
-        let exist_user = self.repo.get_one_user(&UserName::new(user)?).await.is_ok();
+        let exist_user = self.repo.get_one_user(&user_name).await.is_ok();
         if !exist_user {
             return Err(ErrService::Book(ErrBook::UserNotFound));
         }
 
-        let already_booked = self.repo.is_room_already_booked(room, &date.date).await?;
-        if already_booked {
+        if self.is_exist_book(&room_name, &date).await? {
             return Err(ErrService::Book(ErrBook::AlreadyBooked));
         }
 
         let book = Book::new(room, user, date)?;
         let inserted_book = self.repo.insert_book(&book).await?;
+        self.cache.insert(book.clone());
 
         Ok(inserted_book)
     }
@@ -69,6 +76,28 @@ where
         let user = UserName::new(user)?;
         let date = BookDate::new(date)?;
 
+        if !self.is_exist_book_id(&old_book_id).await? {
+            return Err(ErrService::Book(ErrBook::InvalidID));
+        }
+
+        if self.is_exist_book(&room, &date).await? {
+            return Err(ErrService::Book(ErrBook::AlreadyBooked));
+        }
+
+        if date.date < Local::now().date_naive() {
+            return Err(ErrService::Book(ErrBook::InvalidDate));
+        }
+
+        let existing_users = self.repo.get_one_user(&user).await?;
+        if existing_users.user_name != user {
+            return Err(ErrService::Book(ErrBook::UserNotFound));
+        }
+
+        let existing_rooms = self.repo.get_one_room(&room).await?;
+        if existing_rooms.room_name != room {
+            return Err(ErrService::Book(ErrBook::RoomNotFound));
+        }
+
         let book = Book {
             id: old_book_id,
             room_name: room,
@@ -76,57 +105,9 @@ where
             date,
         };
 
-        let existing_id: HashSet<i32> = self
-            .repo
-            .get_all_books()
-            .await?
-            .into_iter()
-            .map(|b| b.id)
-            .collect();
-
-        let existing_rooms: HashSet<RoomName> = self
-            .repo
-            .get_all_rooms()
-            .await?
-            .into_iter()
-            .map(|r| r.room_name)
-            .collect();
-
-        let existing_users: HashSet<UserName> = self
-            .repo
-            .get_all_users()
-            .await?
-            .into_iter()
-            .map(|u| u.user_name)
-            .collect();
-
-        if !existing_id.contains(&old_book_id) {
-            return Err(ErrService::Book(ErrBook::UnableToRead));
-        }
-
-        if self
-            .repo
-            .get_all_books()
-            .await?
-            .iter()
-            .any(|x| (x.date.date == book.date.date) && (x.room_name.name == book.room_name.name))
-        {
-            println!("Already booked");
-            return Err(ErrService::Book(ErrBook::AlreadyBooked));
-        }
-
-        if book.date.date < Local::now().date_naive() {
-            return Err(ErrService::Book(ErrBook::InvalidDate));
-        }
-
-        if !existing_rooms.contains(&book.room_name) {
-            return Err(ErrService::Book(ErrBook::RoomNotFound));
-        }
-        if !existing_users.contains(&book.user_name) {
-            return Err(ErrService::Book(ErrBook::UserNotFound));
-        }
-
         let book = self.repo.update_book(&book).await?;
+        self.cache.remove(&book);
+        self.cache.insert(book.clone());
         Ok(book)
     }
 
@@ -134,21 +115,64 @@ where
         self.repo.get_all_books().await
     }
 
+    pub async fn list_book_by_cache(&self) -> Result<Vec<Book>, ErrService> {
+        let mut vec_book = Vec::new();
+        for element in self.cache.iter() {
+            vec_book.push(element.clone());
+        }
+        Ok(vec_book)
+    }
+
     pub async fn delete_book_by_id(&self, book_id: i32) -> Result<(), ErrService> {
         let deleted = self.repo.delete_book_by_id(book_id).await?;
         if deleted {
+            self.cache.retain(|x| x.id != book_id);
             Ok(())
         } else {
             Err(ErrService::Repo(ErrRepo::UnableToDelete))
         }
     }
 
+    pub async fn is_exist_book(
+        &self,
+        room: &RoomName,
+        date: &BookDate,
+    ) -> Result<bool, ErrService> {
+        Ok(self
+            .cache
+            .iter()
+            .any(|b| (b.date == *date) && (b.room_name == *room)))
+    }
+
+    pub async fn is_exist_book_id(&self, id: &i32) -> Result<bool, ErrService> {
+        Ok(self.cache.iter().any(|b| b.id == *id))
+    }
+
     pub async fn delete_all_book(&self) -> Result<(), ErrService> {
         let deleted = self.repo.delete_all_book().await?;
         if deleted {
+            self.cache.clear();
+            info!("Cache lenght: {:?}", self.cache.len());
             Ok(())
         } else {
             Err(ErrService::Repo(ErrRepo::UnableToDelete))
         }
+    }
+
+    pub async fn populate_cache(&self) -> Result<(), ErrService> {
+        let mut counter = 0;
+        for element in self.list_book().await? {
+            let book = Book {
+                id: element.id,
+                room_name: element.room_name,
+                user_name: element.user_name,
+                date: element.date,
+            };
+            self.cache.insert(book);
+            counter += 1;
+        }
+
+        info!("Cache filed with {} elements", counter);
+        Ok(())
     }
 }

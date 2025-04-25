@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use tokio::sync::RwLock;
+use dashmap::DashSet;
 
 use super::repo::RoomRepo;
 use crate::{
@@ -10,14 +9,14 @@ use crate::{
 #[derive(Debug)]
 pub struct RoomService<T> {
     pub repo: T,
-    cache: RwLock<HashSet<Room>>,
+    cache: DashSet<Room>,
 }
 
 impl<T> RoomService<T> {
     pub fn new(repo: T) -> Self {
         Self {
             repo,
-            cache: RwLock::new(HashSet::new()),
+            cache: DashSet::new(),
         }
     }
 }
@@ -34,12 +33,11 @@ impl<T: RoomRepo> RoomService<T> {
         }
 
         let room = self.repo.insert_room(&room).await?;
-        let mut cache = self.cache.write().await;
-        cache.insert(room.clone());
+        self.cache.insert(room.clone());
         tracing::info!(
             "Room added to cache: {:?} cache has now {} entries",
             room,
-            cache.len()
+            self.cache.len()
         );
         Ok(room)
     }
@@ -48,11 +46,11 @@ impl<T: RoomRepo> RoomService<T> {
         let old_room = Room::new(old_room)?;
         let new_room = Room::new(new_room)?;
 
-        if self.cache.read().await.contains(&new_room) {
+        if self.cache.contains(&new_room) {
             return Err(ErrService::Room(ErrRoom::AlreadyExist));
         }
 
-        if !self.cache.read().await.contains(&old_room) {
+        if !self.cache.contains(&old_room) {
             return Err(ErrService::Room(ErrRoom::RoomNotFound));
         }
 
@@ -70,7 +68,7 @@ impl<T: RoomRepo> RoomService<T> {
                 .get_cache_room_by_id(room)
                 .await?
                 .ok_or(ErrService::Room(ErrRoom::RoomNotFound))?;
-            self.cache.write().await.remove(&id);
+            self.cache.remove(&id);
             Ok(())
         } else {
             Err(ErrService::Repo(ErrRepo::UnableToDelete))
@@ -83,23 +81,18 @@ impl<T: RoomRepo> RoomService<T> {
 
     pub async fn list_cache_rooms(&self) -> Result<Vec<Room>, ErrService> {
         let mut vec: Vec<Room> = Vec::new();
-        for element in self.cache.read().await.iter() {
+        for element in self.cache.iter() {
             vec.push(element.clone());
         }
         Ok(vec)
     }
 
     pub async fn is_exist_room(&self, data: &RoomName) -> Result<bool, ErrService> {
-        let room_list = self.cache.read().await;
-        if room_list.iter().any(|x| x.room_name == *data) {
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        Ok(self.cache.iter().any(|x| x.room_name == *data))
     }
 
     pub async fn get_cache_room_by_room_struct(&self, room: &Room) -> Result<Room, ErrService> {
-        if let Some(value) = self.cache.read().await.get(&room.clone()) {
+        if let Some(value) = self.cache.get(&room.clone()) {
             Ok(value.clone())
         } else {
             Err(ErrService::Room(ErrRoom::RoomNotFound))
@@ -107,7 +100,7 @@ impl<T: RoomRepo> RoomService<T> {
     }
 
     pub async fn get_cache_room_by_id(&self, room_id: i32) -> Result<Option<Room>, ErrService> {
-        if let Some(room_by_id) = self.cache.read().await.iter().find(|x| x.id == room_id) {
+        if let Some(room_by_id) = self.cache.iter().find(|x| x.id == room_id) {
             Ok(Some(room_by_id.clone()))
         } else {
             Ok(None)
@@ -122,7 +115,7 @@ impl<T: RoomRepo> RoomService<T> {
                 id: element.id,
                 room_name: element.room_name,
             };
-            self.cache.write().await.insert(room);
+            self.cache.insert(room);
         }
         Ok(())
     }

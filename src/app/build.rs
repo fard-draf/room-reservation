@@ -22,17 +22,19 @@ pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
 
     let db_client = DBClient::new(pool);
 
-    let room_service = Arc::new(Mutex::new(RoomService::new(db_client.clone())));
+    let room_service = Arc::new(RoomService::new(db_client.clone()));
     let user_service = Arc::new(Mutex::new(UserService::new(db_client.clone())));
+    let book_service = Arc::new(BookService::new(db_client.clone()));
 
-    room_service.lock().await.populate_cache();
+    room_service.populate_cache();
 
     user_service.lock().await.populate_cache();
+    book_service.populate_cache().await;
 
     let state = AppState {
         user_service: user_service.clone(),
         room_service: room_service.clone(),
-        book_service: Arc::new(BookService::new(db_client.clone())),
+        book_service: book_service.clone(),
     };
 
     let cors = CorsLayer::new()
