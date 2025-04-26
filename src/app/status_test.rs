@@ -1,6 +1,6 @@
 use axum::{body::Body, http::Request, middleware::Next, response::Response};
 use std::time::Instant;
-use tracing::info;
+use tracing::{error, info};
 
 pub async fn log_status(req: Request<Body>, next: Next) -> Response<Body> {
     let now = Instant::now();
@@ -12,7 +12,11 @@ pub async fn log_status(req: Request<Body>, next: Next) -> Response<Body> {
     let status = response.status().as_u16();
     let elapsed = now.elapsed().as_micros();
 
-    info!("{method} {uri} → {status} ({elapsed}µs)");
+    if status >= 500 {
+        error!(%method, %uri, status, elapsed, "Server error");
+    } else {
+        info!(%method, %uri, status, elapsed, "Request completed");
+    }
 
     response
 }

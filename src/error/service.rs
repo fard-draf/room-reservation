@@ -15,8 +15,8 @@ pub enum ErrService {
     Repo(ErrRepo),
     Domain(ErrDomain),
     Type(ErrType),
-    Sqlx,
-    StdIO,
+    IO(std::io::Error),
+    Sqlx(sqlx::Error),
 }
 
 impl From<ErrUser> for ErrService {
@@ -56,14 +56,14 @@ impl From<ErrType> for ErrService {
 }
 
 impl From<sqlx::Error> for ErrService {
-    fn from(_err: sqlx::Error) -> Self {
-        ErrService::Sqlx
+    fn from(err: sqlx::Error) -> Self {
+        ErrService::Sqlx(err)
     }
 }
 
 impl From<std::io::Error> for ErrService {
-    fn from(_err: std::io::Error) -> Self {
-        ErrService::StdIO
+    fn from(err: std::io::Error) -> Self {
+        ErrService::IO(err)
     }
 }
 
