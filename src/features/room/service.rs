@@ -1,4 +1,5 @@
 use dashmap::DashSet;
+use tracing::info;
 
 use super::repo::RoomRepo;
 use crate::{
@@ -23,12 +24,9 @@ impl<T> RoomService<T> {
 
 impl<T: RoomRepo> RoomService<T> {
     pub async fn add_room(&self, room: &str) -> Result<Room, ErrService> {
-        println!("[add_room] instance RoomService: {:p}", self);
         let room: Room = Room::new(room)?;
 
-        let is_existing_room = self.is_exist_room(&room.room_name).await?;
-
-        if is_existing_room {
+        if self.is_exist_room(&room.room_name).await? {
             return Err(ErrService::Room(ErrRoom::AlreadyExist));
         }
 
@@ -46,16 +44,15 @@ impl<T: RoomRepo> RoomService<T> {
         let old_room = Room::new(old_room)?;
         let new_room = Room::new(new_room)?;
 
-        if self.cache.contains(&new_room) {
-            return Err(ErrService::Room(ErrRoom::AlreadyExist));
-        }
-
         if !self.cache.contains(&old_room) {
             return Err(ErrService::Room(ErrRoom::RoomNotFound));
         }
 
-        let rooms = self.get_cache_room_by_room_struct(&old_room).await?;
+        if self.cache.contains(&new_room) {
+            return Err(ErrService::Room(ErrRoom::AlreadyExist));
+        }
 
+        let rooms = self.get_cache_room_by_room_struct(&old_room).await?;
         let room = self.repo.update_room(rooms.id, new_room.room_name).await?;
 
         Ok(room)
@@ -80,10 +77,7 @@ impl<T: RoomRepo> RoomService<T> {
     }
 
     pub async fn list_cache_rooms(&self) -> Result<Vec<Room>, ErrService> {
-        let mut vec: Vec<Room> = Vec::new();
-        for element in self.cache.iter() {
-            vec.push(element.clone());
-        }
+        let vec: Vec<Room> = self.cache.iter().map(|r| r.key().clone()).collect();
         Ok(vec)
     }
 
@@ -92,7 +86,7 @@ impl<T: RoomRepo> RoomService<T> {
     }
 
     pub async fn get_cache_room_by_room_struct(&self, room: &Room) -> Result<Room, ErrService> {
-        if let Some(value) = self.cache.get(&room.clone()) {
+        if let Some(value) = self.cache.get(room) {
             Ok(value.clone())
         } else {
             Err(ErrService::Room(ErrRoom::RoomNotFound))
@@ -108,7 +102,7 @@ impl<T: RoomRepo> RoomService<T> {
     }
 
     pub async fn populate_cache(&self) -> Result<(), ErrService> {
-        println!("[populate_cache] instance RoomService: {:p}", self);
+        info!("[populate_cache] instance RoomService: {:p}", self);
         let rooms = self.repo.get_all_rooms().await?;
         for element in rooms {
             let room = Room {

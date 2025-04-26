@@ -4,6 +4,7 @@ use crate::{
     error::{ErrRepo, ErrService, ErrUser},
 };
 use dashmap::{self, DashSet};
+use tracing::info;
 
 #[derive(Debug)]
 pub struct UserService<T> {
@@ -24,19 +25,13 @@ impl<T: UserRepo> UserService<T> {
     pub async fn add_user(&self, name: &str) -> Result<User, ErrService> {
         let user = User::new(name)?;
 
-        let is_existing_user = self.is_exist_user(&user.user_name).await?;
-
-        if is_existing_user {
+        if self.is_exist_user(&user.user_name).await? {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
-        let user = self.repo.insert_user(&user).await?;
 
+        let user = self.repo.insert_user(&user).await?;
         self.cache.insert(user.clone());
-        tracing::info!(
-            "User added to cache: {:?} cache has now {} entries",
-            user,
-            self.cache.len()
-        );
+        info!("cache lenght: {}", self.cache.len());
         Ok(user)
     }
 
@@ -69,8 +64,7 @@ impl<T: UserRepo> UserService<T> {
     pub async fn delete_user_by_name(&self, user_name: &str) -> Result<(), ErrService> {
         let user_name = UserName::new(user_name)?;
 
-        let deleted = self.repo.delete_user_by_name(user_name.clone()).await?;
-        if deleted {
+        if self.repo.delete_user_by_name(user_name.clone()).await? {
             self.cache.retain(|u| u.user_name != user_name);
             Ok(())
         } else {
