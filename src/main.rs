@@ -1,10 +1,10 @@
-use std::{error::Error, net::SocketAddr};
+use std::net::SocketAddr;
 
-use room_reservations::{app::build::build_app, config::Config};
+use room_reservations::{app::build::build_app, config::Config, error::ErrService};
 use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), ErrService> {
     let subscriber = FmtSubscriber::builder().with_env_filter("info").finish();
 
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");

@@ -1,20 +1,20 @@
 use axum::{Router, middleware::from_fn};
 use sqlx::postgres::PgPoolOptions;
-use std::{error::Error, sync::Arc};
-use tokio::sync::Mutex;
+use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     app::{state::AppState, status_test::log_status},
+    error::ErrService,
     features::{
         book::{routes::book_routes, service::BookService},
         room::{routes::room_routes, service::RoomService},
-        user::{self, routes::user_routes, service::UserService},
+        user::{routes::user_routes, service::UserService},
     },
-    infra::db::DBClient,
+    infra::{cache::try_init_caches, db::DBClient},
 };
 
-pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
+pub async fn build_app(database_url: &str) -> Result<Router, ErrService> {
     let pool = PgPoolOptions::new()
         .max_connections(30)
         .connect(database_url)
@@ -23,13 +23,10 @@ pub async fn build_app(database_url: &str) -> Result<Router, Box<dyn Error>> {
     let db_client = DBClient::new(pool);
 
     let room_service = Arc::new(RoomService::new(db_client.clone()));
-    let user_service = Arc::new(Mutex::new(UserService::new(db_client.clone())));
+    let user_service = Arc::new(UserService::new(db_client.clone()));
     let book_service = Arc::new(BookService::new(db_client.clone()));
 
-    room_service.populate_cache();
-
-    user_service.lock().await.populate_cache();
-    book_service.populate_cache().await;
+    try_init_caches(&user_service, &room_service, &book_service).await?;
 
     let state = AppState {
         user_service: user_service.clone(),

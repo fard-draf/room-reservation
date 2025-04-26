@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use tokio::sync::Mutex;
 
 use crate::{
     features::{
@@ -8,7 +7,7 @@ use crate::{
     infra::db::DBClient,
 };
 
-pub type SharedUserService = Arc<Mutex<UserService<DBClient>>>;
+pub type SharedUserService = Arc<UserService<DBClient>>;
 pub type SharedRoomService = Arc<RoomService<DBClient>>;
 pub type SharedBookService = Arc<BookService<DBClient>>;
 

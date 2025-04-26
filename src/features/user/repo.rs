@@ -61,12 +61,12 @@ impl UserRepo for DBClient {
     }
 
     async fn get_all_users(&self) -> Result<Vec<User>, ErrService> {
-        let rows = sqlx::query_as::<_, UserRowDto>("SELECT user_id, user_name FROM users ")
+        let row = sqlx::query_as::<_, UserRowDto>("SELECT user_id, user_name FROM users ")
             .fetch_all(&self.pool)
             .await
             .map_err(|_e| ErrRepo::BadRequest)?;
 
-        let users: Vec<User> = rows
+        let users: Vec<User> = row
             .into_iter()
             .map(|dto| dto.try_into().map_err(|_| ErrRepo::DoesntExist))
             .collect::<Result<_, _>>()?;
@@ -75,11 +75,10 @@ impl UserRepo for DBClient {
     }
 
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, ErrService> {
-        let row = sqlx::query_as!(
-            UserRowDto,
+        let row = sqlx::query_as::<_, UserRowDto>(
             "SELECT user_id, user_name FROM users WHERE user_id = $1",
-            id
         )
+        .bind(id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|_e| ErrRepo::DoesntExist)?;

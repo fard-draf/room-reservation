@@ -1,23 +1,21 @@
+use super::repo::UserRepo;
 use crate::{
     domain::{User, UserID, UserName},
     error::{ErrRepo, ErrService, ErrUser},
 };
-use std::collections::HashSet;
-use tokio::sync::RwLock;
-
-use super::repo::UserRepo;
+use dashmap::{self, DashSet};
 
 #[derive(Debug)]
 pub struct UserService<T> {
     repo: T,
-    cache: RwLock<HashSet<User>>,
+    cache: DashSet<User>,
 }
 
 impl<T> UserService<T> {
     pub fn new(repo: T) -> Self {
         Self {
             repo,
-            cache: RwLock::new(HashSet::new()),
+            cache: DashSet::new(),
         }
     }
 }
@@ -32,12 +30,12 @@ impl<T: UserRepo> UserService<T> {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
         let user = self.repo.insert_user(&user).await?;
-        let mut cache = self.cache.write().await;
-        cache.insert(user.clone());
+
+        self.cache.insert(user.clone());
         tracing::info!(
             "User added to cache: {:?} cache has now {} entries",
             user,
-            cache.len()
+            self.cache.len()
         );
         Ok(user)
     }
@@ -54,17 +52,13 @@ impl<T: UserRepo> UserService<T> {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
 
-        let maybe_user = {
-            let guard = self.cache.read().await;
-            guard.iter().find(|u| u.user_name == old_name).cloned()
-        };
+        let maybe_user = { self.cache.iter().find(|u| u.user_name == old_name) };
 
         if let Some(old_user) = maybe_user {
             let updated_user = self.repo.update_user(old_user.user_id.id, new_name).await?;
 
-            let mut cache = self.cache.write().await;
-            cache.remove(&old_user);
-            cache.insert(updated_user.clone());
+            self.cache.remove(&old_user);
+            self.cache.insert(updated_user.clone());
 
             Ok(updated_user)
         } else {
@@ -77,8 +71,7 @@ impl<T: UserRepo> UserService<T> {
 
         let deleted = self.repo.delete_user_by_name(user_name.clone()).await?;
         if deleted {
-            let mut guard = self.cache.write().await;
-            guard.retain(|u| u.user_name != user_name);
+            self.cache.retain(|u| u.user_name != user_name);
             Ok(())
         } else {
             Err(ErrService::Repo(ErrRepo::DoesntExist))
@@ -90,32 +83,24 @@ impl<T: UserRepo> UserService<T> {
     }
 
     pub async fn is_exist_user(&self, user: &UserName) -> Result<bool, ErrService> {
-        let user_list = self.cache.read().await;
-        if user_list.iter().any(|u| u.user_name == *user) {
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+        Ok(self.cache.iter().any(|u| u.user_name == *user))
     }
 
-    pub async fn get_cache_user_by_user_struct(&self, user: &User) -> Result<User, ErrService> {
-        if self.cache.read().await.contains(user) {
+    pub async fn get_user_by_user_struct_on_cache(&self, user: &User) -> Result<User, ErrService> {
+        if self.cache.contains(user) {
             Err(ErrService::User(ErrUser::AlreadyExist))
-        } else if let Some(value) = self.cache.read().await.get(&user.clone()) {
+        } else if let Some(value) = self.cache.get(&user.clone()) {
             Ok(value.clone())
         } else {
             return Err(ErrService::User(ErrUser::UserNotFound));
         }
     }
 
-    pub async fn get_cache_user_by_id(&self, user_id: UserID) -> Result<Option<User>, ErrService> {
-        if let Some(user_by_id) = self
-            .cache
-            .read()
-            .await
-            .iter()
-            .find(|x| x.user_id == user_id)
-        {
+    pub async fn get_user_by_id_on_cache(
+        &self,
+        user_id: UserID,
+    ) -> Result<Option<User>, ErrService> {
+        if let Some(user_by_id) = self.cache.iter().find(|x| x.user_id == user_id) {
             Ok(Some(user_by_id.clone()))
         } else {
             Ok(None)
@@ -130,7 +115,7 @@ impl<T: UserRepo> UserService<T> {
                 user_id: element.user_id,
                 user_name: element.user_name,
             };
-            self.cache.write().await.insert(room);
+            self.cache.insert(room);
         }
         Ok(())
     }
