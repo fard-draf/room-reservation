@@ -8,59 +8,80 @@
 //         infra::in_memory::in_memo_repo::InMemoryRepo,
 //     };
 //     use async_trait::async_trait;
+//     use serde_json::ser;
 //     use uuid::Uuid;
 
 //     #[async_trait]
 //     impl UserRepo for InMemoryRepo<User> {
 //         async fn insert_user(&self, user: &User) -> Result<User, ErrService> {
 //             let vec = self.get_all_users().await?;
-//             if vec.iter().any(|x| x.user_name == user.user_name) {
+//             if self.get_one_user(&user.user_name).await.is_ok() {
 //                 return Err(ErrService::User(ErrUser::AlreadyExist));
 //             }
-//             self.repo
-//                 .lock()
-//                 .unwrap()
-//                 .insert(user.user_id.id, user.clone());
+//             let mut guard = self.repo.write().await;
+//             guard.insert(user.clone());
 //             Ok(user.clone())
 //         }
 //         async fn delete_user_by_name(&self, user_name: UserName) -> Result<bool, ErrService> {
-//             let mut repo = self.repo.lock().unwrap();
-//             if let Some(key) = repo.iter().find_map(|(k, v)| {
-//                 if v.user_name == user_name {
-//                     Some(*k)
-//                 } else {
-//                     None
-//                 }
-//             }) {
-//                 repo.remove(&key)
-//                     .ok_or(ErrService::Repo(ErrRepo::UnableToDelete))?;
+//             let repo = self.repo.write().await;
+//             if let Some(key) = repo.iter().find(|v| v.user_name == user_name) {
+//                 let mut guard = self.repo.write().await;
+//                 guard.remove(&key);
+//             } else {
+//                 return Err(ErrService::User(ErrUser::UserNotFound));
 //             }
+
 //             Ok(true)
 //         }
-//         async fn update_user(&self, id: Uuid, new_name: UserName) -> Result<User, ErrService> {
-//             let mut repo = self.repo.lock().unwrap();
-//             let user: &mut User = repo
-//                 .get_mut(&id)
-//                 .ok_or(ErrService::User(ErrUser::UserNotFound))?;
-//             user.user_name = new_name;
 
-//             Ok(user.clone())
+//         async fn update_user(&self, id: Uuid, new_name: UserName) -> Result<User, ErrService> {
+//             let read_guard = self.repo.read().await;
+//             if let Some(user) = read_guard.iter().find(|u| u.user_id.id == id) {
+//                 let new_user = User {
+//                     user_id: user.user_id.clone(),
+//                     user_name: new_name,
+//                 };
+//                 let mut write_gard = self.repo.write().await;
+//                 write_gard.remove(user);
+//                 write_gard.insert(new_user);
+
+//                 Ok(user.clone())
+//             } else {
+//                 Err(ErrService::User(ErrUser::UserNotFound))
+//             }
 //         }
 //         async fn get_all_users(&self) -> Result<Vec<User>, ErrService> {
-//             let users = self.repo.lock().unwrap().values().cloned().collect();
-//             Ok(users)
+//             Ok(self.repo.read().await.iter().cloned().collect())
 //         }
 
 //         async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, ErrService> {
-//             let repo = self.repo.lock().unwrap();
-//             Ok(repo.get(&id).cloned())
+//             Ok(self
+//                 .repo
+//                 .read()
+//                 .await
+//                 .iter()
+//                 .find(|u| u.user_id.id == id)
+//                 .cloned())
+//         }
+
+//         async fn get_one_user(&self, user_name: &UserName) -> Result<User, ErrService> {
+//             if let Some(user) = self
+//                 .repo
+//                 .read()
+//                 .await
+//                 .iter()
+//                 .find(|u| u.user_name == *user_name)
+//             {
+//                 Ok(user.clone())
+//             } else {
+//                 Err(ErrService::User(ErrUser::UserNotFound))
+//             }
 //         }
 //     }
 
 //     #[tokio::test]
 //     async fn print_all_users() {
-//         let repo = InMemoryRepo::new().await;
-//         let service = UserService::new(repo);
+//         let service: UserService<InMemoryRepo<User>> = InMemoryRepo::init_user_service().await;
 
 //         assert!(service.add_user("Sophie").await.is_ok());
 //         assert!(service.add_user("Jordan").await.is_ok());
@@ -68,8 +89,7 @@
 
 //     #[tokio::test]
 //     async fn add_and_list_user() {
-//         let repo = InMemoryRepo::new().await;
-//         let service = UserService::new(repo);
+//         let service: UserService<InMemoryRepo<User>> = InMemoryRepo::init_user_service().await;
 
 //         let user_ok1 = service.add_user("Sophie").await;
 //         let user_ok2 = service.add_user("Jordan").await;
@@ -89,9 +109,30 @@
 //         assert!(user_err3.is_err());
 //         assert!(user_err4.is_err());
 
-//         assert!(service.is_exist_user("Jordan").await.is_ok());
-//         assert!(service.is_exist_user("     JORDAN   ").await.is_ok());
-//         assert!(!service.is_exist_user("Daniel").await.unwrap());
+//         assert!(
+//             service
+//                 .is_exist_user(&UserName {
+//                     name: "Jordan".to_string()
+//                 })
+//                 .await
+//                 .is_ok()
+//         );
+//         assert!(
+//             service
+//                 .is_exist_user(&UserName {
+//                     name: "   JoRdAn    ".to_string()
+//                 })
+//                 .await
+//                 .is_ok()
+//         );
+//         assert!(
+//             !service
+//                 .is_exist_user(&UserName {
+//                     name: "Daniel".to_string()
+//                 })
+//                 .await
+//                 .unwrap()
+//         );
 //     }
 
 //     #[tokio::test]
@@ -102,21 +143,42 @@
 //         assert!(service.add_user("Sophie").await.is_ok());
 //         assert!(service.add_user("Jordan").await.is_ok());
 
-//         assert!(service.delete_user("Sophie").await.is_ok());
+//         assert!(service.delete_user_by_name("Sophie").await.is_ok());
 //     }
 
-//     #[tokio::test]
-//     async fn update_user_name() {
-//         let repo = InMemoryRepo::new().await;
-//         let service = UserService::new(repo);
+//     // #[tokio::test]
+//     // async fn update_user_name() {
+//     //     let repo = InMemoryRepo::new().await;
+//     //     let service = UserService::new(repo);
 
-//         assert!(service.add_user("Sophie").await.is_ok());
-//         assert!(service.is_exist_user("Sophie").await.is_ok());
-//         assert!(service.update_user("Sophie", "Alice").await.is_ok());
-//         assert!(service.is_exist_user("Alice").await.is_ok());
-//         assert!(service.update_user("ALICE", "CALISSE").await.is_ok());
-//         assert!(service.is_exist_user("Calisse").await.is_ok());
+//     //     assert!(service.add_user("Sophie").await.is_ok());
+//     //     assert!(
+//     //         service
+//     //             .is_exist_user(&UserName {
+//     //                 name: "Sophie".to_string()
+//     //             })
+//     //             .await
+//     //             .is_ok()
+//     //     );
+//     //     assert!(service.update_user("Sophie", "Alice").await.is_ok());
+//     //     assert!(
+//     //         service
+//     //             .is_exist_user(&UserName {
+//     //                 name: "Alice".to_string()
+//     //             })
+//     //             .await
+//     //             .is_ok()
+//     //     );
+//     //     assert!(service.update_user("ALICE", "CALISSE").await.is_ok());
+//     //     assert!(
+//     //         service
+//     //             .is_exist_user(&UserName {
+//     //                 name: "CALISSE".to_string()
+//     //             })
+//     //             .await
+//     //             .is_ok()
+//     //     );
 
-//         assert!(service.update_user("Unexisting", "Bob").await.is_err());
-//     }
+//     //     assert!(service.update_user("Unexisting", "Bob").await.is_err());
+//     // }
 // }

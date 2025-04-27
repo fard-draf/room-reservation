@@ -23,5 +23,6 @@ pub async fn try_init_caches(
         .populate_cache()
         .await
         .map_err(|_| ErrService::Repo(ErrRepo::Unreachable))?;
+
     Ok(())
 }
