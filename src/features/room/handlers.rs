@@ -1,7 +1,7 @@
 use axum::{Json, extract::State, response::IntoResponse};
+use tracing::info;
 
 use std::sync::Arc;
-use tokio::sync::Mutex;
 
 use crate::{
     app::state::AppState,
@@ -12,17 +12,21 @@ use crate::{
     },
 };
 
-use super::dto::{DeleteRoomByIdDto, UpdateRoomDto};
+use super::dto::{DeleteRoomByIdDto, UpdateRoomDto, UpdateRoomNameDto};
 
-pub type SharedRoomService<T> = Arc<Mutex<RoomService<T>>>;
+pub type SharedRoomService<T> = Arc<RoomService<T>>;
 
 pub async fn create_room(
     State(state): State<AppState>,
     Json(payload): Json<CreateRoomDto>,
 ) -> Result<impl IntoResponse, ErrService> {
+    info!("create room tag");
     let service = state.room_service;
+    info!("create room tag after service");
 
     let dto = service.add_room(&payload.room_name).await?;
+    info!("create room tag after dto");
+
     let room_dto = RoomDto {
         id: dto.id,
         room_name: dto.room_name.name,
@@ -33,7 +37,7 @@ pub async fn create_room(
 
 pub async fn update_room_name(
     State(state): State<AppState>,
-    Json(payload): Json<UpdateRoomDto>,
+    Json(payload): Json<UpdateRoomNameDto>,
 ) -> Result<impl IntoResponse, ErrService> {
     let service = state.room_service;
 
@@ -41,9 +45,9 @@ pub async fn update_room_name(
         .update_room(&payload.old_name, &payload.new_name)
         .await?;
 
-    let room_dto = RoomDto {
+    let room_dto = UpdateRoomDto {
         id: dto.id,
-        room_name: dto.room_name.name,
+        new_name: dto.room_name.name,
     };
 
     Ok(Json(room_dto))

@@ -3,7 +3,7 @@ use crate::{
     domain::{User, UserID, UserName},
     error::{ErrRepo, ErrService, ErrUser},
 };
-use dashmap::{self, DashSet};
+use dashmap::DashSet;
 use tracing::info;
 
 #[derive(Debug)]
@@ -23,7 +23,7 @@ impl<T> UserService<T> {
 
 impl<T: UserRepo> UserService<T> {
     pub async fn add_user(&self, name: &str) -> Result<User, ErrService> {
-        let user = User::new(name)?;
+        let user: User = User::new(name)?;
 
         if self.is_exist_user(&user.user_name).await? {
             return Err(ErrService::User(ErrUser::AlreadyExist));
@@ -76,8 +76,8 @@ impl<T: UserRepo> UserService<T> {
         self.repo.get_all_users().await
     }
 
-    pub async fn is_exist_user(&self, user: &UserName) -> Result<bool, ErrService> {
-        Ok(self.cache.iter().any(|u| u.user_name == *user))
+    pub async fn is_exist_user(&self, user_name: &UserName) -> Result<bool, ErrService> {
+        Ok(self.cache.iter().any(|u| u.user_name == *user_name))
     }
 
     pub async fn get_user_by_user_struct_on_cache(&self, user: &User) -> Result<User, ErrService> {
@@ -102,15 +102,18 @@ impl<T: UserRepo> UserService<T> {
     }
 
     pub async fn populate_cache(&self) -> Result<(), ErrService> {
-        println!("[populate_cache] instance UserService: {:p}", self);
         let users = self.repo.get_all_users().await?;
         for element in users {
-            let room = User {
+            let user = User {
                 user_id: element.user_id,
                 user_name: element.user_name,
             };
-            self.cache.insert(room);
+            self.cache.insert(user);
         }
+        println!(
+            "[populate_cache] instance UserService: {}",
+            self.cache.len()
+        );
         Ok(())
     }
 }

@@ -16,7 +16,7 @@ pub struct DeleteRoomByIdDto {
 }
 
 #[derive(Deserialize)]
-pub struct UpdateRoomDto {
+pub struct UpdateRoomNameDto {
     pub old_name: String,
     pub new_name: String,
 }
@@ -25,6 +25,12 @@ pub struct UpdateRoomDto {
 pub struct RoomDto {
     pub id: i32,
     pub room_name: String,
+}
+
+#[derive(Serialize)]
+pub struct UpdateRoomDto {
+    pub id: i32,
+    pub new_name: String,
 }
 
 #[derive(Debug, sqlx::FromRow)]

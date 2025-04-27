@@ -8,7 +8,7 @@ use crate::{
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait RoomRepo {
+pub trait RoomRepo: Send + Sync {
     async fn insert_room(&self, room: &Room) -> Result<Room, ErrService>;
     async fn update_room(&self, id: i32, new_name: RoomName) -> Result<Room, ErrService>;
     async fn delete_room_by_id(&self, room: i32) -> Result<bool, ErrService>;
@@ -22,10 +22,10 @@ impl RoomRepo for DBClient {
         let row: RoomRowDto = sqlx::query_as::<_, RoomRowDto>(
             "INSERT INTO rooms (room_name) VALUES ($1) RETURNING id, room_name",
         )
-        .bind(room.room_name.name.clone())
+        .bind(&room.room_name.name)
         .fetch_one(&self.pool)
         .await
-        .map_err(|_e| ErrRepo::Unreachable)?;
+        .map_err(|_e| ErrRepo::BadRequest)?;
 
         let room: Room = row.try_into()?;
         Ok(room)
@@ -54,7 +54,7 @@ impl RoomRepo for DBClient {
             .bind(room_name)
             .execute(&self.pool)
             .await
-            .map_err(|_e| ErrRepo::DoesntExist)?;
+            .map_err(|_e| ErrRepo::BadRequest)?;
 
         Ok(row.rows_affected() != 0)
     }

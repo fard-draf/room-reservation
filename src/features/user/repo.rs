@@ -55,7 +55,7 @@ impl UserRepo for DBClient {
             .bind(name.name)
             .execute(&self.pool)
             .await
-            .map_err(|_e| ErrRepo::DoesntExist)?;
+            .map_err(|_e| ErrRepo::BadRequest)?;
 
         Ok(row.rows_affected() > 0)
     }
@@ -81,7 +81,7 @@ impl UserRepo for DBClient {
         .bind(id)
         .fetch_optional(&self.pool)
         .await
-        .map_err(|_e| ErrRepo::DoesntExist)?;
+        .map_err(|_e| ErrRepo::BadRequest)?;
 
         match row {
             Some(dto) => Ok(Some(User::try_from(dto)?)),
