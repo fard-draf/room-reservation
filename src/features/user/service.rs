@@ -47,7 +47,12 @@ impl<T: UserRepo> UserService<T> {
             return Err(ErrService::User(ErrUser::AlreadyExist));
         }
 
-        let maybe_user = { self.cache.iter().find(|u| u.user_name == old_name) };
+        let maybe_user = {
+            self.cache
+                .iter()
+                .find(|u| u.user_name == old_name)
+                .map(|u| u.key().clone())
+        };
 
         if let Some(old_user) = maybe_user {
             let updated_user = self.repo.update_user(old_user.user_id.id, new_name).await?;
@@ -63,8 +68,9 @@ impl<T: UserRepo> UserService<T> {
 
     pub async fn delete_user_by_name(&self, user_name: &str) -> Result<(), ErrService> {
         let user_name = UserName::new(user_name)?;
+        let deleted = self.repo.delete_user_by_name(user_name.clone()).await?;
 
-        if self.repo.delete_user_by_name(user_name.clone()).await? {
+        if deleted {
             self.cache.retain(|u| u.user_name != user_name);
             Ok(())
         } else {
@@ -110,10 +116,7 @@ impl<T: UserRepo> UserService<T> {
             };
             self.cache.insert(user);
         }
-        println!(
-            "[populate_cache] instance UserService: {}",
-            self.cache.len()
-        );
+        println!("UserService cache lenght: {}", self.cache.len());
         Ok(())
     }
 }

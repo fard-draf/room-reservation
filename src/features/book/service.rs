@@ -160,7 +160,6 @@ where
     }
 
     pub async fn populate_cache(&self) -> Result<(), ErrService> {
-        let mut counter = 0;
         for element in self.list_book().await? {
             let book = Book {
                 id: element.id,
@@ -169,10 +168,9 @@ where
                 date: element.date,
             };
             self.cache.insert(book);
-            counter += 1;
         }
 
-        info!("Cache filed with {} elements", counter);
+        info!("BookService cache lenght: {}", self.cache.len());
         Ok(())
     }
 }

@@ -5,7 +5,7 @@ use crate::{
 };
 
 use dashmap::DashSet;
-use tracing::info;
+use tracing::{error, info, warn};
 
 #[derive(Debug)]
 pub struct RoomService<T> {
@@ -33,7 +33,7 @@ impl<T: RoomRepo> RoomService<T> {
 
         let room = self.repo.insert_room(&room).await?;
         self.cache.insert(room.clone());
-        tracing::info!(
+        info!(
             "Room added to cache: {:?} cache has now {} entries",
             room,
             self.cache.len()
@@ -44,7 +44,6 @@ impl<T: RoomRepo> RoomService<T> {
     pub async fn update_room(&self, old_room: &str, new_room: &str) -> Result<Room, ErrService> {
         let old_room = Room::new(old_room)?;
         let new_room = Room::new(new_room)?;
-        info!("cache length : {}", self.cache.len());
 
         let cache_snapshot: Vec<_> = self.cache.iter().map(|r| r.clone()).collect();
 
@@ -65,7 +64,7 @@ impl<T: RoomRepo> RoomService<T> {
             .update_room(o_room.id, new_room.room_name.clone())
             .await
             .map_err(|e| {
-                tracing::error!("Failed to update room: {:?}", e);
+                error!("Failed to update room: {:?}", e);
                 ErrService::Repo(ErrRepo::BadRequest)
             })?;
 
@@ -85,7 +84,7 @@ impl<T: RoomRepo> RoomService<T> {
             if let Some(room_founded) = self.get_room_by_id_on_cache(room)? {
                 self.cache.remove(&room_founded);
             } else {
-                tracing::warn!(
+                warn!(
                     "Deleted room from database, but not found in cache: id = {}",
                     room
                 );
@@ -114,7 +113,7 @@ impl<T: RoomRepo> RoomService<T> {
             info!("room founded: {:?}", value.room_name);
             Ok(value.clone())
         } else {
-            info!("room not founded");
+            info!("Room not founded");
             Err(ErrService::Room(ErrRoom::RoomNotFound))
         }
     }
@@ -136,10 +135,7 @@ impl<T: RoomRepo> RoomService<T> {
             };
             self.cache.insert(room);
         }
-        info!(
-            "[populate_cache] instance RoomService: {}",
-            self.cache.len()
-        );
+        info!("RoomService cache lenght: {}", self.cache.len());
         Ok(())
     }
 }
