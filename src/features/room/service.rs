@@ -109,13 +109,13 @@ impl<T: RoomRepo> RoomService<T> {
     }
 
     pub async fn get_cache_room_by_room_struct(&self, room: &Room) -> Result<Room, ErrService> {
-        if let Some(value) = self.cache.get(room) {
-            info!("room founded: {:?}", value.room_name);
-            Ok(value.clone())
-        } else {
-            info!("Room not founded");
-            Err(ErrService::Room(ErrRoom::RoomNotFound))
-        }
+        self.cache
+            .get(room)
+            .map(|value| {
+                info!("room founded: {:?}", value.room_name);
+                value.clone()
+            })
+            .ok_or_else(|| ErrService::Room(ErrRoom::RoomNotFound))
     }
 
     pub fn get_room_by_id_on_cache(&self, room_id: i32) -> Result<Option<Room>, ErrService> {
