@@ -13,11 +13,7 @@ mod test {
     #[async_trait]
     impl UserRepo for InMemoryRepo<User> {
         async fn insert_user(&self, user: &User) -> Result<User, ErrService> {
-            if self.get_one_user(&user.user_name).await.is_ok() {
-                return Err(ErrService::User(ErrUser::AlreadyExist));
-            }
-            let mut guard = self.repo.write().await;
-            guard.insert(user.clone());
+            self.repo.write().await.insert(user.clone());
             Ok(user.clone())
         }
         async fn delete_user_by_name(&self, user_name: UserName) -> Result<bool, ErrService> {
