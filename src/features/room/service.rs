@@ -100,8 +100,7 @@ impl<T: RoomRepo> RoomService<T> {
     }
 
     pub async fn list_cache_rooms(&self) -> Result<Vec<Room>, ErrService> {
-        let vec: Vec<Room> = self.cache.iter().map(|r| r.key().clone()).collect();
-        Ok(vec)
+        Ok(self.cache.iter().map(|r| r.key().clone()).collect())
     }
 
     pub async fn is_exist_room(&self, room_name: &RoomName) -> Result<bool, ErrService> {
@@ -128,13 +127,14 @@ impl<T: RoomRepo> RoomService<T> {
 
     pub async fn populate_cache(&self) -> Result<(), ErrService> {
         let rooms = self.repo.get_all_rooms().await?;
-        for element in rooms {
+        rooms.into_iter().for_each(|e| {
             let room = Room {
-                id: element.id,
-                room_name: element.room_name,
+                id: e.id,
+                room_name: e.room_name,
             };
             self.cache.insert(room);
-        }
+        });
+
         info!("RoomService cache lenght: {}", self.cache.len());
         Ok(())
     }

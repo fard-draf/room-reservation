@@ -116,11 +116,11 @@ where
     }
 
     pub async fn list_book_by_cache(&self) -> Result<Vec<Book>, ErrService> {
-        let mut vec_book = Vec::new();
-        for element in self.cache.iter() {
-            vec_book.push(element.clone());
-        }
-        Ok(vec_book)
+        Ok(self
+            .cache
+            .iter()
+            .map(|item| item.clone())
+            .collect::<Vec<Book>>())
     }
 
     pub async fn delete_book_by_id(&self, book_id: i32) -> Result<(), ErrService> {
@@ -160,15 +160,15 @@ where
     }
 
     pub async fn populate_cache(&self) -> Result<(), ErrService> {
-        for element in self.list_book().await? {
+        self.list_book().await?.into_iter().for_each(|e| {
             let book = Book {
-                id: element.id,
-                room_name: element.room_name,
-                user_name: element.user_name,
-                date: element.date,
+                id: e.id,
+                room_name: e.room_name,
+                user_name: e.user_name,
+                date: e.date,
             };
             self.cache.insert(book);
-        }
+        });
 
         info!("BookService cache lenght: {}", self.cache.len());
         Ok(())

@@ -64,14 +64,6 @@ pub struct Room {
 }
 
 impl Room {
-    //     pub fn new(name: &str) -> Result<Self, ErrDomain> {
-    //         Ok(Self {
-    //             id: RoomID::new(),
-    //             room_name: RoomName::new(name.to_string())?,
-    //         })
-    //     }
-    // }
-
     pub fn new(name: &str) -> Result<Self, ErrDomain> {
         Ok(Self {
             id: 0,
@@ -99,17 +91,6 @@ impl RoomName {
         }
     }
 }
-
-// #[derive(Debug, PartialEq, Clone)]
-// // pub struct RoomID {
-// //     id: Uuid,
-// // }
-
-// // impl RoomID {
-// //     pub fn new() -> Self {
-// //         Self { id: Uuid::new_v4() }
-// //     }
-// // }
 
 ////////////////////////////REGISTERY BOOK
 #[derive(Debug, sqlx::FromRow, Eq, Hash, PartialEq, Clone)]

@@ -108,14 +108,22 @@ impl<T: UserRepo> UserService<T> {
     }
 
     pub async fn populate_cache(&self) -> Result<(), ErrService> {
-        let users = self.repo.get_all_users().await?;
-        for element in users {
+        self.repo.get_all_users().await?.into_iter().for_each(|e| {
             let user = User {
-                user_id: element.user_id,
-                user_name: element.user_name,
+                user_id: e.user_id,
+                user_name: e.user_name,
             };
             self.cache.insert(user);
-        }
+        });
+
+        // let users = self.repo.get_all_users().await?;
+        // for element in users {
+        //     let user = User {
+        //         user_id: element.user_id,
+        //         user_name: element.user_name,
+        //     };
+        //     self.cache.insert(user);
+        // }
         println!("UserService cache lenght: {}", self.cache.len());
         Ok(())
     }
